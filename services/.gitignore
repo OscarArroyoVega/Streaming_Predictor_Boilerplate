@@ -199,3 +199,6 @@ ca.cert
 .venv/
 certificates/
 
+.history/
+.history/*
+**/.history/
