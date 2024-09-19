@@ -54,7 +54,7 @@ def produce_trades(
 
 
     
-if __name__ == '__main__':
+if __name__ == '__main__'
 
     from src.config import config
     
