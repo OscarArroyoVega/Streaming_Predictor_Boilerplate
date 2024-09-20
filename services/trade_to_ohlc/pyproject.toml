@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.11"
 loguru = "^0.7.2"
 quixstreams = "^2.10.0"
+pydantic = "^2.9.2"
 
 
 [build-system]

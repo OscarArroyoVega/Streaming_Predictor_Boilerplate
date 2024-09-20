@@ -35,7 +35,7 @@ def transform_trade_to_ohlcv(
     kafka_output_topic: str,
     kafka_consumer_group: str,
     ohlcv_window_seconds: int,
-    ):
+):
     """
     Reads incoming trades from a Kafka topic, aggregates them into OHLC data and writes the OHLC data to another Kafka topic.
     
@@ -53,7 +53,7 @@ def transform_trade_to_ohlcv(
     app = Application(
         broker_address=kafka_broker_address,
         consumer_group=kafka_consumer_group,
-)
+    )
 
     # Define the input and output topics
     input_topic = app.topic(name=kafka_input_topic, value_deserializer="json")
@@ -102,13 +102,14 @@ def transform_trade_to_ohlcv(
     
 
 if __name__ == "__main__":
+    
+    from src.config import config
     transform_trade_to_ohlcv(
-        kafka_broker_address="localhost:19092",
-        kafka_input_topic="trade",
-        kafka_output_topic="ohlcv", # FIXME extract config info to environment variables file
-        kafka_consumer_group="consumer_group_trade_to_ohlcv_2",
-        ohlcv_window_seconds=60,
-        
+        kafka_broker_address=config.kafka_broker_address,
+        kafka_input_topic=config.kafka_input_topic,
+        kafka_output_topic=config.kafka_output_topic, # FIXME extract config info to environment variables file
+        kafka_consumer_group=config.kafka_consumer_group,
+        ohlcv_window_seconds=config.ohlcv_window_seconds,
     )                   
 
     
