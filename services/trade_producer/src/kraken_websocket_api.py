@@ -64,12 +64,7 @@ class KrakenWebsocketAPI:
         trades = [ ]
         
         for trade in message["data"]:
-            # extract the following fields
-                # - product_id
-                # - quantity
-                # - price
-                # - timestamp in milliseconds
-        
+            # extract the following fields corresponding to a trade
             trades.append(
                 Trade(
                 product_id=trade["symbol"],
