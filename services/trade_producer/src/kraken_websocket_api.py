@@ -16,65 +16,78 @@ class Trade(BaseModel):
     price: float
     timestamp_ms: int
 
+from src.trade_data_source.trade import Trade
+from src.trade_data_source.base import TradeSource
 
-class KrakenWebsocketAPI:
-    
+class KrakenWebsocketAPI(TradeSource):
+
     """
-    Class for reading real time trades from the Kraken websocket API.
+    Class for reading real-time trades from the Kraken Websocket API
     """
     URL = 'wss://ws.kraken.com/v2'
-    
+
     def __init__(self, product_id: str):
         """
         Initializes the KrakenWebsocketAPI instance
-        
+
         Args:
-            product_id (str): Product id of the trades to be read.
+            product_id (str): The product id to get the trades from
         """
         self.product_id = product_id
+
         # establish connection to the Kraken websocket API
         self._ws = create_connection(self.URL)
         logger.debug('Connection established')
 
         # subscribe to the trades for the given `product_id`
         self._subscribe(product_id)
+
         
-    def get_trades(self) -> List[dict]:
-        
+    def get_trades(self) -> List[Trade]:
         """
-        Returns the latest batch of trades from the Kraken websocket API.
+        Returns the latest batch of trades from the Kraken Websocket API
+
         Args:
-                None
-            
-        Returns:
-            List[Trade]: A list of trades.
-        """
-     
-        message = self._ws.recv()
+            None
         
-        if "heartbeat" in message:
-            "when we receive a heartbeat message, we just return an empty list"
+        Returns:
+            List[Trade]: A list of Trade objects
+        """
+        message = self._ws.recv()
+
+        if 'heartbeat' in message:
+            # when I get a heartbeat, I return an empty list
             logger.debug('Heartbeat received')
             return []
-        
-        # otherwise parse the message
+
+        # parse the message string as a dictionary
         message = json.loads(message)
-        
-        # extract the trade data
-        trades = [ ]
-        
-        for trade in message["data"]:
-            # extract the following fields corresponding to a trade
+
+        # extract trades from the message['data'] field
+        trades = []
+        for trade in message['data']:
+            
+            # extract the following fields
+            # - product_id
+            # - quantity
+            # - price
+            # - timestamp in milliseconds
             trades.append(
                 Trade(
-                product_id=trade["symbol"],
-                price=trade["price"],
-                quantity=trade["qty"],
-                timestamp_ms=self.to_ms(trade["timestamp"]),
+                    product_id=trade['symbol'],
+                    price=trade['price'],
+                    quantity=trade['qty'],
+                    timestamp_ms=self.to_ms(trade['timestamp']),
                 )
             )
-            
-        return trades   
+
+        return trades
+
+    def is_done(self) -> bool:
+        """
+        Returns True if the Kraken Websocket API connection is closed
+        """
+        False
         
     def _subscribe(self, product_id: str):
         """

@@ -55,9 +55,6 @@ def push_value_to_feature_group(
     # transform the value dict into a pandas DataFrame
     value_df = pd.DataFrame(value)
 
-
-    breakpoint()
-
     # push the value to the Feature Store
     feature_group.insert(
         value_df,
