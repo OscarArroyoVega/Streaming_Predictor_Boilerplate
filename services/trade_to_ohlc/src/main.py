@@ -1,6 +1,6 @@
 from quixstreams import Application
 from datetime import timedelta
-
+from typing import Any, List, Optional, Tuple
 from loguru import logger
 
 
@@ -55,9 +55,20 @@ def transform_trade_to_ohlcv(
         consumer_group=kafka_consumer_group,
         auto_create_topics=True,
     )
-
+    
+    def custom_ts_extractor(
+        value: Any,
+        headers: Optional[List[Tuple[str, bytes]]],
+        timestamp: float,
+        timestamp_type: int,
+    ) -> int:
+        """
+        Extracts the timestamp from the message value.
+        """  
+        return value["timestamp_ms"]
+    
     # Define the input and output topics
-    input_topic = app.topic(name=kafka_input_topic, value_deserializer="json")
+    input_topic = app.topic(name=kafka_input_topic, value_deserializer="json", timestamp_extractor=custom_ts_extractor)
     output_topic = app.topic(name=kafka_output_topic, value_serializer="json")
 
     # Create a StreamingDataFrame for the input topic

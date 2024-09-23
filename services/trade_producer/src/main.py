@@ -3,10 +3,9 @@ from typing import List
 from loguru import logger
 from quixstreams import Application
 
-from src.kraken_websocket_api import (
-    KrakenWebsocketAPI,
-    Trade,
-)
+# from src.trade_data_source.trade import Trade
+# from src.trade_data_source.base import TradeSource
+from src.trade_data_source import Trade, TradeSource
 
 def produce_trades(
     kafka_broker_address: str,
@@ -32,8 +31,6 @@ def produce_trades(
     # Define an output topic with JSON serialization
     topic = app.topic(name=kafka_topic, value_serializer='json')
     
-    # Create an instance of the KrakenWebsocketAPI class
-    kraken_api = KrakenWebsocketAPI(product_id=product_id)
     
 
     # Create a Producer instance
@@ -43,14 +40,14 @@ def produce_trades(
             trades: List[Trade] = kraken_api.get_trades()
             
             for trade in trades:
-                # Serialize the trade using the defin000000000d topic 
+                # Serialize the trade using the defined topic 
                 # Transform it into a sequence of bytes
                 message = topic.serialize(key=trade.product_id, value=trade.model_dump())
                 
                 # Produce the message into the kafka topic
                 producer.produce(topic=topic.name, key=message.key, value=message.value)
                 
-                #affter producing the trade, log the trade
+                #after producing the trade, log the trade
                 logger.debug(f"Pushed trade to Kafka: {trade}")
 
 
@@ -75,5 +72,6 @@ if __name__ == "__main__":
     produce_trades(
         kafka_broker_address=config.kafka_broker_address,
         kafka_topic=config.kafka_topic,
+        product_id=config.product_id,
         trade_data_source=kraken_api,
     )

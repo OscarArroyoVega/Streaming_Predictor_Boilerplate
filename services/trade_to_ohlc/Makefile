@@ -1,16 +1,24 @@
-run-dev:
-	copy dev.env .env
+run-live-dev:
+	copy live.dev.env .env 
+	poetry run python src/main.py
+
+run-historical-dev:
+	copy historical.dev.env .env 
 	poetry run python src/main.py
 
 build:
 	docker build -t trade_to_ohlc .
 
-run: build
+run-live: build
 	docker run \
 		--network=redpanda_network \
-		--env-file prod.env \
+		--env-file live.prod.env \
 		trade_to_ohlc 
 
-
+run-historical: build
+	docker run \
+		--network=redpanda_network \
+		--env-file historical.prod.env \
+		trade_to_ohlc
 
 
