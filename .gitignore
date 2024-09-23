@@ -130,6 +130,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+dev.env
 
 # Spyder project settings
 .spyderproject
@@ -202,3 +203,4 @@ certificates/
 .history/
 .history/*
 **/.history/
+config.py

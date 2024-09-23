@@ -43,9 +43,9 @@ def push_value_to_feature_group(
     feature_group = feature_store.get_or_create_feature_group(
         name=feature_group_name,
         version=feature_group_version,
-        primary_key=feature_group_primary_keys,
+        primary_key=["product_id", "timestamp_ms"],
         event_time=feature_group_event_time,
-        online_enabled=True,
+        online_enabled=start_offline_materialization,
 
         # TODO: either as homework or I will show one example.
         # expectation_suite=expectation_suite_transactions,
@@ -54,10 +54,9 @@ def push_value_to_feature_group(
 
     # transform the value dict into a pandas DataFrame
     value_df = pd.DataFrame(value)
-    breakpoint()
-    print(value_df.columns)
 
-    # breakpoint()
+
+    breakpoint()
 
     # push the value to the Feature Store
     feature_group.insert(
