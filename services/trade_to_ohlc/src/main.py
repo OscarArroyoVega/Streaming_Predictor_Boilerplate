@@ -53,6 +53,7 @@ def transform_trade_to_ohlcv(
     app = Application(
         broker_address=kafka_broker_address,
         consumer_group=kafka_consumer_group,
+        auto_create_topics=True,
     )
 
     # Define the input and output topics
@@ -87,10 +88,11 @@ def transform_trade_to_ohlcv(
     sdf["low"] = sdf["value"]["low"]
     sdf["close"] = sdf["value"]["close"]
     sdf["volume"] = sdf["value"]["volume"]
+    sdf["product_id"] = sdf["value"]["product_id"]
     sdf["timestamp_ms"] = sdf["end"]
     
     # keep only the columns we need
-    sdf = sdf[["timestamp_ms", "open", "high", "low", "close", "volume"]]
+    sdf = sdf[["product_id", "timestamp_ms", "open", "high", "low", "close", "volume"]]
     
     #print the output to the console
     sdf.update(logger.debug)
@@ -104,6 +106,7 @@ def transform_trade_to_ohlcv(
 if __name__ == "__main__":
     
     from src.config import config
+    
     transform_trade_to_ohlcv(
         kafka_broker_address=config.kafka_broker_address,
         kafka_input_topic=config.kafka_input_topic,
