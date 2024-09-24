@@ -101,7 +101,7 @@ class KrakenWebsocketAPI(TradeSource):
             "params": {
                 "channel": "trade",
                 "symbol": [
-                    "ETH/EUR"
+                    product_id
                 ],
                 "snapshot": False
             },

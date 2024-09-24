@@ -1,5 +1,5 @@
 from typing import List
-
+import json
 from quixstreams import Application
 
 from loguru import logger
@@ -65,7 +65,6 @@ def topic_to_feature_store(
             value = msg.value()
 
             # decode the message bytes into a dictionary
-            import json
             value = json.loads(value.decode('utf-8'))
             
             # Append the message to the batch
