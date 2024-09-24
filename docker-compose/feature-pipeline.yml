@@ -2,6 +2,7 @@ name: feature-pipeline
 networks:
   redpanda_network:
     external: true
+    # name: redpanda_network in case it doesn't work
 services:
   trade_producer:
     build:

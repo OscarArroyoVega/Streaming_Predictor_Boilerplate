@@ -6,7 +6,13 @@ authors = ["Oscar Arroyo Vega <arroscar@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.13"
+hopsworks = "^3.7.0"
+pydantic-settings = "^2.5.2"
+loguru = "^0.7.2"
+python-dotenv = "^1.0.1"
+pydantic = "^2.9.2"
+scikit-learn = "^1.5.2"
 
 
 [build-system]
