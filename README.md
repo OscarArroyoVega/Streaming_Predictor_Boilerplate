@@ -1,16 +1,28 @@
-## Welcome to Cohort 2 of Building a Real-Time ML System Together
+## Exercice of the Cohort 2 of Building a Real-Time ML System Together by Pau Labarta Bajo 
 
-### In a nutshell
+### Summary
+This is a real world practice to improve MLOPS and ML engigneering skills. 
+The objective it to build a ML system for the crypto price prediction problem.
 
-In this second iteration of the course I want to cover more ground. I want us to build a better
-ML system for the crypto price prediction problem.
+### Tech stack
+-docker
+-redpanda(Kafka)
+-quixtreams 
+-hopsworks 
+-comet
 
-As the duration of the course will be the same as in cohort 1 (which means 4 or 5 weeks) I will re-use
-a existing code from the first cohort. Which means that I won't be typing it from beginning to end, but copying fragments of code and walking you through their WHY? and HOW?
 
-<div align="center">
-    <img src="./media/ml_system_cohort_2.gif" width='750' />
-</div>
+### the journey
+-Build independent Microservices
+-Deal with streaming data and kafka topics
+-RESTAPI and WebsocketAPI conections
+-Pushing and retrieving topics to and from the feature store
+-dockerize real-time feature pipeline
+-dockerize backfill pipeline 
+-build a training pipeline
+-feature engineering
+-improve the model with CV hiperparamenter tuning
+...
 
 
 ## Session 1 todos
