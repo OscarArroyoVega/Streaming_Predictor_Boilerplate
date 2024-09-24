@@ -1,4 +1,4 @@
-version: '3.7'
+
 name: redpanda-owl-shop
 networks:
   redpanda_network:
@@ -26,6 +26,7 @@ services:
       - 18082:18082
       - 19092:19092
       - 19644:9644
+      - 9092:19092
     volumes:
       - redpanda:/var/lib/redpanda/data
     networks:
