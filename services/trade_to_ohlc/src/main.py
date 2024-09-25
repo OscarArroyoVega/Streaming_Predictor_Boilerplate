@@ -5,6 +5,7 @@ from loguru import logger
 
 
 def init_ohlc_candle(trade: dict):
+    logger.debug(f"Received trade: {trade}")
     """
     Returns the initial OHLC candle when the first `trade` in that window happens.
     """
@@ -84,7 +85,7 @@ def transform_trade_to_ohlcv(
     #sdf = sdf.to_topic(output_topic)
     
 
-    # create the application window, the meat of the application
+    # create the application window, the meat of the application!
     sdf = (
         sdf.tumbling_window(duration_ms=timedelta(seconds=ohlcv_window_seconds))
         .reduce(

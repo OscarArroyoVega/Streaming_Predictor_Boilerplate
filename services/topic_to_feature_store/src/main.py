@@ -75,6 +75,8 @@ def topic_to_feature_store(
                 continue
             
             logger.debug(f'Batch has size {len(batch)} >= {batch_size}... Pushing data to Feature Store')
+            logger.debug(f'Batch: {batch}')
+            # push the batch to the feature store
             push_value_to_feature_group(
                 batch,
                 feature_group_name,
@@ -83,12 +85,12 @@ def topic_to_feature_store(
                 feature_group_event_time,
                 start_offline_materialization,
             )
-
+            logger.debug(f"Successfully pushed batch of {len(batch)} messages to Feature Store")
             # Clear the batch
             batch = []
             
             # Store the offset of the processed message on the Consumer 
-            # for the auto-commit mechanism.
+            # for the auto-commit mechanism. 
             # It will send it to Kafka in the background.
             # Storing offset only after the message is processed enables at-least-once delivery
             # guarantees.

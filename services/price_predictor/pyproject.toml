@@ -13,6 +13,8 @@ loguru = "^0.7.2"
 python-dotenv = "^1.0.1"
 pydantic = "^2.9.2"
 scikit-learn = "^1.5.2"
+comet-ml = "^3.46.0"
+xgboost = "^2.1.1"
 
 
 [build-system]

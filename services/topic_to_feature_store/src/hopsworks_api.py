@@ -1,6 +1,8 @@
 import pandas as pd
 from typing import List
 import hopsworks
+
+from loguru import logger
 # from src.hopsworks_api import push_value_to_feature_group
 
 from src.config import hopsworks_config as config
@@ -13,7 +15,7 @@ project = hopsworks.login(
 
 # get a handle to the Feature Store
 feature_store = project.get_feature_store()
-
+logger.debug(f'Feature Store: {feature_store}')
 
 def push_value_to_feature_group(
     value: List[dict],
@@ -23,7 +25,12 @@ def push_value_to_feature_group(
     feature_group_event_time: str,
     start_offline_materialization: bool,
 ):
-
+    logger.debug(f'Pushing value to feature group: {feature_group_name}')
+    logger.debug(f'Value to be pushed: {value}')
+    logger.debug(f'Feature group version: {feature_group_version}')
+    logger.debug(f'Primary keys: {feature_group_primary_keys}')
+    logger.debug(f'Event time: {feature_group_event_time}')
+    logger.debug(f'Start offline materialization: {start_offline_materialization}')
     """
     Pushes the given `value` to the given `feature_group_name` in the Feature Store.
 
@@ -43,20 +50,23 @@ def push_value_to_feature_group(
     feature_group = feature_store.get_or_create_feature_group(
         name=feature_group_name,
         version=feature_group_version,
-        primary_key=["product_id", "timestamp_ms"],
+        primary_key=feature_group_primary_keys,
         event_time=feature_group_event_time,
         online_enabled=start_offline_materialization,
-
+    )
+    logger.debug(f'Feature group: {feature_group}')
         # TODO: either as homework or I will show one example.
         # expectation_suite=expectation_suite_transactions,
-    )
+    
     
 
     # transform the value dict into a pandas DataFrame
     value_df = pd.DataFrame(value)
+    logger.debug(f'Value DataFrame: {value_df}')
 
     # push the value to the Feature Store
     feature_group.insert(
         value_df,
         write_options={"start_offline_materialization" : start_offline_materialization}
     )
+    logger.debug(f'Successfully pushed value to feature group: {feature_group_name}')
