@@ -3,7 +3,8 @@
 ### Summary
 This is a real world practice to improve MLOPS and ML engigneering skills. 
 The objective it to build a ML system for the crypto price prediction problem.
-
+Even if i've writen 90% of the code in this repository (me and my LLM friend) to ensure I learn the topics, I must say that the original repostitory has been a guide in the 99% of the steps, it is here https://github.com/Real-World-ML/real-time-ml-system-cohort-2.
+  
 ### Tech stack
 -docker
 -redpanda(Kafka)
