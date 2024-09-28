@@ -1,3 +1,0 @@
-run-dev:
-	poetry build -t trade_producer
-

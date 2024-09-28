@@ -1,2 +1,0 @@
-start-redpanda:
-	docker compose up -d redpanda
