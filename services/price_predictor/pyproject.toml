@@ -15,6 +15,8 @@ pydantic = "^2.9.2"
 scikit-learn = "^1.5.2"
 comet-ml = "^3.46.0"
 xgboost = "^2.1.1"
+optuna = "^4.0.0"
+ta-lib = "^0.4.32"
 
 
 [build-system]

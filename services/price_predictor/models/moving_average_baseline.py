@@ -1,24 +1,18 @@
-import pandas as pd
+iimport pandas as pd
 
 class MovingAverageBaseline:
     """
-    Class for a model that predicts the price in the next "window_size" minutes
-    by using the moving average of the last "window_size" minutes
+    A simple baseline model that predicts the next price using the moving average of the last `window_size` prices.
     """
-    
-    def __init__(self, ohlc_window_sec: int):
-        self.ohlc_window_sec = ohlc_window_sec
-        
+    def __init__(self, window_size: int):
+        self.window_size = window_size
+
     def fit(self, X: pd.DataFrame, y: pd.Series):
         """
-        Fit the model to the data.
+        Fits the model to the data.
         """
         pass
     
-    def predict(self, X: pd.DataFrame) -> pd.Series:
-        """
-        Predicts the price in the next "window_size" minutes by using the moving average of the last "window_size" minutes.
-        """
-        return X["close"]
-    
-    
+    def predict(self, data: pd.DataFrame) -> pd.DataFrame:
+        raise NotImplementedError("Talk to Shadrack and he will help you implement this method")
+        pass

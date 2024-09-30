@@ -1,14 +1,17 @@
 from typing import Optional
+
+import hashlib
 from comet_ml import Experiment
 from loguru import logger
 from sklearn.metrics import mean_absolute_error
+import joblib
+import os
 
-from src.config import HopsworksConfig
-from src.config import CometConfig
-
-
-
-
+from src.config import CometConfig, HopsworksConfig
+from src.feature_engineering import add_technical_indicators
+from src.models.current_price_baseline import CurrentPriceBaseline
+from src.models.xgboost_model import XGBoostModel
+from src.utils import hash_dataframe
 def train_model(
     comet_config: CometConfig,
     hopsworks_config: HopsworksConfig,
@@ -20,40 +23,58 @@ def train_model(
     product_id: str,
     last_n_days: int,
     forecast_steps: int,
-    comet_api_key: str,
-    comet_project_name: str,
-    
+    perc_test_data: Optional[float] = 0.3,
+    n_search_trials: Optional[int] = 10,
+    n_splits: Optional[int] = 3,
 ):
     """
-    Reads features from the Feature Store 
+    Reads features from the Feature Store
     Trains a predictive model,
     Saves the model to the model registry
-    
+
     Args:
         comet_config: CometConfig
+            Configuration object for Comet.
         hopsworks_config: HopsworksConfig
+            Configuration object for Hopsworks.
         feature_view_name: str
+            Name of the feature view to read data from.
         feature_view_version: int
+            Version of the feature view to read data from.
         feature_group_name: str
+            Name of the feature group to read data from.
         feature_group_version: int
+            Version of the feature group to read data from.
         ohlc_window_sec: int
+            Time window in seconds for OHLC (Open, High, Low, Close) data.
         product_id: str
+            Identifier for the product to predict prices for.
         last_n_days: int
+            Number of past days to consider for training the model.
         forecast_steps: int
-    
+            Number of steps to forecast into the future.
+        perc_test_data: float
+            Percentage of the data to use for testing.
+        n_search_trials: Optional[int] = 10
+            Number of trials to run for hyperparameter optimization.
+        n_splits: Optional[int] = 3
+            Number of splits to use for cross-validation.
     Returns:
         None
-    
     """
-     # create a comet experiment
+    # create a comet experiment
     experiment = Experiment(
-        api_key=comet_api_key,
-        project_name=comet_project_name,
+        api_key=comet_config.comet_api_key,
+        project_name=comet_config.comet_project_name,
     )
-    
-    #load features from the feature store
+    experiment.log_parameter("last_n_days", last_n_days)
+    experiment.log_parameter("forecast_steps", forecast_steps)
+    experiment.log_parameter("n_search_trials", n_search_trials)
+    experiment.log_parameter("n_splits", n_splits)
+
+    # Load feature data from the Feature Store
     from src.ohlc_data_reader import OhlcDataReader
-    
+
     ohlc_data_reader = OhlcDataReader(
         ohlc_window_sec=ohlc_window_sec,
         hopsworks_config=hopsworks_config,
@@ -62,104 +83,184 @@ def train_model(
         feature_group_name=feature_group_name,
         feature_group_version=feature_group_version,
     )
-    
+
     # read the sorted data from the offline store
-    ohlc_df = ohlc_data_reader.read_from_offline_store(
+    # data is sorted by timestamp_ms
+    ohlc_data = ohlc_data_reader.read_from_offline_store(
         product_id=product_id,
         last_n_days=last_n_days
     )
-  
-    logger.debug(f"Data loaded: {ohlc_df.head()}")
-    experiment.log_parameter("n_raw_feature_rows", len(ohlc_df))
-      
-    # Split the data into train and test sets
-    prop_test_data = 0.3  # 30% for test data
-    test_size = int(len(ohlc_df) * prop_test_data)
-    train_df = ohlc_df[:-test_size]
-    test_df = ohlc_df[-test_size:]
-    logger.debug(f"Train set start date: {train_df.index[0]}, end date: {train_df.index[-1]}, length: {len(train_df)}")
-    logger.debug(f"Test set start date: {test_df.index[0]}, end date: {test_df.index[-1]}, length: {len(test_df)}")
+    logger.debug(f"Read {len(ohlc_data)} rows from the offline store")
+    experiment.log_parameter("n_raw_feature_rows", len(ohlc_data))
+
+    # log a hash of the dataset to comet
+    dataset_hash = hash_dataframe(ohlc_data)
+    experiment.log_parameter("ohlc_data_hash", dataset_hash)
+
+    # split the data into training and testing
+    logger.debug(f"Splitting the data into training and testing")
+    test_size = int(len(ohlc_data) * perc_test_data)
+    train_df = ohlc_data[:-test_size]
+    test_df = ohlc_data[-test_size:]
+    logger.debug(f"Training data: {len(train_df)} rows")
+    logger.debug(f"Testing data: {len(test_df)} rows")
     experiment.log_parameter("n_train_rows_before_dropna", len(train_df))
     experiment.log_parameter("n_test_rows_before_dropna", len(test_df))
-    
-    # first dumb model!
+
     # add a column with the target price we want our model to predict
-    # for both train and test data
+    # for both training data and testing data
     train_df['target_price'] = train_df['close'].shift(-forecast_steps)
     test_df['target_price'] = test_df['close'].shift(-forecast_steps)
-    logger.debug(f"Target price added to train_df: {train_df[['close', 'target_price']].head()}")
-    logger.debug(f"Target price added to test_df: {test_df[['close', 'target_price']].head()}")
-   
-    
-    #remove the rows with NaN values
+    logger.debug(f"Added target price column to training and testing data")
+
+    # remove rows with NaN values
     train_df = train_df.dropna()
     test_df = test_df.dropna()
-    logger.debug(f"NaN values dropped from train_df: {train_df.shape}")
-    logger.debug(f"NaN values dropped from test_df: {test_df.shape}")
+    logger.debug(f"Removed rows with NaN values")
+    logger.debug(f"Training data after removing NaN values: {len(train_df)} rows")
+    logger.debug(f"Testing data after removing NaN values: {len(test_df)} rows")
     experiment.log_parameter("n_train_rows_after_dropna", len(train_df))
     experiment.log_parameter("n_test_rows_after_dropna", len(test_df))
-    
-    # split data into features and targets
+
+    # split the data into features and target
     X_train = train_df.drop(columns=['target_price'])
     y_train = train_df['target_price']
     X_test = test_df.drop(columns=['target_price'])
     y_test = test_df['target_price']
+    logger.debug(f"Split the data into features and target")
     
-    #log the shape of the data
-    logger.debug(f"X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
-    logger.debug(f"X_test shape: {X_test.shape}, y_test shape: {y_test.shape}")
+    # keep only the features that are needed for the model
+    # TODO: think if I want these hard-coded here or if I want to provide them as parameters
+    # to my training function
+    X_train = X_train[['open', 'high', 'low', 'close', 'volume']]
+    X_test = X_test[['open', 'high', 'low', 'close', 'volume']]
     
-     # log the shapes to Comet ML
+    # add technical indicators to the features
+    X_train = add_technical_indicators(X_train)
+    X_test = add_technical_indicators(X_test)
+    logger.debug(f"Added technical indicators to the features")
+    logger.debug(f"X_train: {X_train.columns}")
+    logger.debug(f"X_test: {X_test.columns}")
+    experiment.log_parameter('features', X_train.columns.tolist())
+
+    # Dropping rows with NaN values
+    # extract row indices from X_train where any of the technical indicators is not NaN
+    nan_rows_train = X_train.isna().any(axis=1)
+    # count number of NaN rows
+    logger.debug(f"Number of NaN rows in X_train: {nan_rows_train.sum()}")
+    # keep only the rows where the technical indicators are not NaN
+    X_train = X_train.loc[~nan_rows_train]
+    y_train = y_train.loc[~nan_rows_train]
+
+    # extract row indices from X_test where any of the technical indicators is not NaN
+    nan_rows_test = X_test.isna().any(axis=1)
+    # count number of NaN rows
+    logger.debug(f"Number of NaN rows in X_test: {nan_rows_test.sum()}")
+    # keep only the rows where the technical indicators are not NaN
+    X_test = X_test.loc[~nan_rows_test]
+    y_test = y_test.loc[~nan_rows_test]
+
+    # log the number of NaN rows and the percentage of dropped rows
+    experiment.log_parameter("n_nan_rows_train", nan_rows_train.sum())
+    experiment.log_parameter("n_nan_rows_test", nan_rows_test.sum())
+    experiment.log_parameter("perc_dropped_rows_train", nan_rows_train.sum() / len(X_train) * 100)
+    experiment.log_parameter("perc_dropped_rows_test", nan_rows_test.sum() / len(X_test) * 100)
+
+    # log dimensions of the features and target
+    logger.debug(f"X_train: {X_train.shape}")
+    logger.debug(f"y_train: {y_train.shape}")
+    logger.debug(f"X_test: {X_test.shape}")
+    logger.debug(f"y_test: {y_test.shape}")
+    
+    # log the shapes to Comet ML
     experiment.log_parameter("X_train_shape", X_train.shape)
     experiment.log_parameter("y_train_shape", y_train.shape)
     experiment.log_parameter("X_test_shape", X_test.shape)
     experiment.log_parameter("y_test_shape", y_test.shape)
 
-    
-    #build a model
-    from models.current_price_baseline import CurrentPriceBaseline
-    model = CurrentPriceBaseline(ohlc_window_sec=ohlc_window_sec)
+    # breakpoint()
+
+    # build a baseline model
+    model = CurrentPriceBaseline()
     model.fit(X_train, y_train)
-    logger.debug(f"Model trained: {model}")
-    experiment.log_metric("mae", mae)
-        
-    #evaluate the model
+    logger.debug(f"Model built")
+
+    # evaluate the model
     y_pred = model.predict(X_test)
-   
-    
     mae = mean_absolute_error(y_test, y_pred)
-    logger.debug(f"Mean absolute error: {mae}")     
-    experiment.log_metric("mae", mae)
-    breakpoint()
-    
-    #train an XGBoost model
-    from xgboost import XGBRegressor
-    xgb_model = XGBRegressor()
-    xgb_model.fit(X_train, y_train)
+    logger.debug(f"Mean absolute error of CurrentPriceBaseline: {mae}")
+    experiment.log_metric("mae_CurrentPriceBaseline", mae)
+    mae_baseline = mae
+
+    # compute mae on the training data for debugging purposes
+    y_train_pred = model.predict(X_train)
+    mae_train = mean_absolute_error(y_train, y_train_pred)
+    logger.debug(f"Mean absolute error on the training data of CurrentPriceBaseline: {mae_train}")
+    experiment.log_metric("mae_training_CurrentPriceBaseline", mae_train)
+
+    # train an XGBoost model
+    xgb_model = XGBoostModel()
+    xgb_model.fit(X_train, y_train, n_search_trials=n_search_trials, n_splits=n_splits)
     y_pred = xgb_model.predict(X_test)
-    xgb_mae = mean_absolute_error(y_test, y_pred)
-    logger.debug(f"XGBoost Mean absolute error: {xgb_mae}")
-    experiment.log_metric("xgb_mae", xgb_mae)
+
+    # compute mae on the test data
+    mae = mean_absolute_error(y_test, y_pred)
+    logger.debug(f"Mean absolute error: {mae}")
+    experiment.log_metric("mae", mae)
     
-    #save model to the model registry
+    # compute mae on the training data for debugging purposes
+    y_train_pred = xgb_model.predict(X_train)
+    mae_train = mean_absolute_error(y_train, y_train_pred)
+    logger.debug(f"Mean absolute error on the training data: {mae_train}")
+    experiment.log_metric("mae_training", mae_train)
+
+    # breakpoint()
     
+    # Save the model locally
+    model_name = f"price_predictor_{product_id.replace('/', '_')}_{ohlc_window_sec}s_{forecast_steps}steps"
+    local_model_path = f"{model_name}.joblib"
+    joblib.dump(xgb_model.get_model_obj(), local_model_path)
+    
+    # Log the model to Comet ML
+    experiment.log_model(
+        name=model_name,
+        file_or_folder=local_model_path,
+        overwrite=True,
+        # model_framework="xgboost",
+        # model_format="joblib"
+    )
+    
+    if mae < mae_baseline:
+        logger.info(f"Model {model_name} is better than the baseline model. Pushing to Model Registry")
+        # Register the model in Comet ML registry
+        registered_model = experiment.register_model(
+            model_name=model_name,
+            # model_version=model_version,
+            # overwrite=True
+        )
+    else:
+        logger.info(f"Model {model_name} is not better than the baseline model. Not pushing to Model Registry")
+    
+    # Clean up the local model file
+    os.remove(local_model_path)
 
     experiment.end()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
     from src.config import config, hopsworks_config, comet_config
-    
+
     train_model(
         comet_config=comet_config,
         hopsworks_config=hopsworks_config,
         feature_view_name=config.feature_view_name,
         feature_view_version=config.feature_view_version,
         feature_group_name=config.feature_group_name,
-        feature_group_version=config.feature_group_version,    
+        feature_group_version=config.feature_group_version,
         ohlc_window_sec=config.ohlc_window_sec,
         product_id=config.product_id,
         last_n_days=config.last_n_days,
         forecast_steps=config.forecast_steps,
+        n_search_trials=config.n_search_trials,
+        n_splits=config.n_splits,
     )
-    
