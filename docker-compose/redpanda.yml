@@ -42,6 +42,8 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
+    restart: always  # Added restart policy
+
   console:
     image: docker.redpanda.com/redpandadata/console:v2.7.2
     entrypoint: /bin/sh
@@ -69,3 +71,4 @@ services:
       - redpanda_network
     depends_on:
       - redpanda
+    restart: always  # Added restart policy

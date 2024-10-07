@@ -9,8 +9,61 @@ import requests
 from src.trade_data_source.base import TradeSource, Trade
 
 class KrakenRestAPI(TradeSource):
+    """
+    A class to fetch trades from the Kraken REST API for multiple products.
+    """
 
-    URL = 'https://api.kraken.com/0/public/Trades?pair={product_id}&since={since_sec}'
+    def __init__(
+        self,
+        product_ids: list[str],
+        last_n_days: int,
+        cache_dir: Optional[str] = None,
+    ) -> None:
+        
+        # initialize a KrakenRestAPISingleProduct for each product_id
+        self.kraken_rest_api_single_product = [
+            KrakenRestAPISingleProduct(product_id, last_n_days, cache_dir)
+            for product_id in product_ids
+        ]
+
+    def get_trades(self) -> List[Trade]:
+        """
+        Fetches a batch of trades from the Kraken Rest API for all product_ids and returns them as a list
+        of dictionaries.
+        """
+        # if you are slow like Pau do this
+        trades = []
+        for api in self.kraken_rest_api_single_product:
+            if not api.is_done():
+                trades += api.get_trades()
+        
+        return trades
+
+        # if you can grasp one liners fast, use this. It is also faster, thanks Alexander
+        # return [trade for product_id in self.kraken_rest_api_single_product for trade in product_id.get_trades()]
+
+
+    def is_done(self) -> bool:
+        """
+        Returns True if all the KrakenRestAPISingleProduct instances are done, False otherwise.
+        """
+        # this is what Pau would do
+        for api in self.kraken_rest_api_single_product:
+            if not api.is_done():
+                return False
+        
+        return True
+
+        # this is what Cursor (trained on thousand and thousands of lines of code) would do
+        # return all(api.is_done() for api in self.kraken_rest_api_single_product)
+
+
+class KrakenRestAPISingleProduct(TradeSource):
+    """
+    A class to fetch trades from the Kraken REST API for a single product.
+    """
+
+    URL = 'https://api.kraken.com/0/public/Trades?pair={product_id}&since={since_sec}&count=1000'
 
     def __init__(
         self,
@@ -75,7 +128,7 @@ class KrakenRestAPI(TradeSource):
         to_ms = int(today_date.timestamp() * 1000)
 
         # from_ms is last_n_days ago from today, so
-        from_ms = to_ms - last_n_days * 24 * 60 * 60 * 1000 # transform days to milliseconds
+        from_ms = to_ms - last_n_days * 24 * 60 * 60 * 1000
 
         return from_ms, to_ms
 
@@ -287,4 +340,3 @@ def ns_to_date(ns: int) -> str:
     return datetime.fromtimestamp(ns / 1_000_000_000, tz=timezone.utc).strftime(
         '%Y-%m-%d %H:%M:%S'
     )
-    

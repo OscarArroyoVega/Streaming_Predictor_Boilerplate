@@ -12,6 +12,7 @@ project = hopsworks.login(
     project=config.hopsworks_project_name,
     api_key_value=config.hopsworks_api_key
 )
+logger.info(f"Successfully connected to Hopsworks project: {project.name}")
 
 # get a handle to the Feature Store
 feature_store = project.get_feature_store()
@@ -52,9 +53,9 @@ def push_value_to_feature_group(
         version=feature_group_version,
         primary_key=feature_group_primary_keys,
         event_time=feature_group_event_time,
-        online_enabled=start_offline_materialization,
+        online_enabled=True,
     )
-    logger.debug(f'Feature group: {feature_group}')
+    logger.info(f"Successfully got or created feature group: {feature_group.name}")
         # TODO: either as homework or I will show one example.
         # expectation_suite=expectation_suite_transactions,
     
@@ -65,8 +66,9 @@ def push_value_to_feature_group(
     logger.debug(f'Value DataFrame: {value_df}')
 
     # push the value to the Feature Store
+    logger.info(f"Attempting to insert {len(value_df)} rows into feature group")
     feature_group.insert(
         value_df,
         write_options={"start_offline_materialization" : start_offline_materialization}
     )
-    logger.debug(f'Successfully pushed value to feature group: {feature_group_name}')
+    logger.info(f"Successfully inserted {len(value_df)} rows into feature group")

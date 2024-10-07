@@ -1,20 +1,17 @@
 from datetime import datetime, timezone
 from typing import List
-from websocket import create_connection
 import json
+from websocket import create_connection
 
 from loguru import logger
 
-from pydantic import BaseModel 
+# from pydantic import BaseModel
 
-class Trade(BaseModel):
-    """
-    A pydantic class that represents a trade and do type checking to its fields.
-    """
-    product_id: str
-    quantity: float
-    price: float
-    timestamp_ms: int
+# class Trade(BaseModel):
+#     product_ids: str
+#     quantity: float
+#     price: float
+#     timestamp_ms: int
 
 from src.trade_data_source.trade import Trade
 from src.trade_data_source.base import TradeSource
@@ -26,23 +23,22 @@ class KrakenWebsocketAPI(TradeSource):
     """
     URL = 'wss://ws.kraken.com/v2'
 
-    def __init__(self, product_id: str):
+    def __init__(self, product_ids: list[str]):
         """
         Initializes the KrakenWebsocketAPI instance
 
         Args:
-            product_id (str): The product id to get the trades from
+            product_ids (str): The product id to get the trades from
         """
-        self.product_id = product_id
+        self.product_ids: list[str] = product_ids
 
         # establish connection to the Kraken websocket API
         self._ws = create_connection(self.URL)
         logger.debug('Connection established')
 
-        # subscribe to the trades for the given `product_id`
-        self._subscribe(product_id)
+        # subscribe to the trades for the given `product_ids`
+        self._subscribe(product_ids)
 
-        
     def get_trades(self) -> List[Trade]:
         """
         Returns the latest batch of trades from the Kraken Websocket API
@@ -68,63 +64,54 @@ class KrakenWebsocketAPI(TradeSource):
         for trade in message['data']:
             
             # extract the following fields
-            # - product_id
+            # - product_ids
             # - quantity
             # - price
             # - timestamp in milliseconds
             trades.append(
                 Trade(
-                    product_id=trade['symbol'],
-                    price=trade['price'],
+                    product_id=trade["symbol"],
                     quantity=trade['qty'],
+                    price=trade['price'],
                     timestamp_ms=self.to_ms(trade['timestamp']),
                 )
             )
 
+
+
         return trades
+    
 
     def is_done(self) -> bool:
         """
         Returns True if the Kraken Websocket API connection is closed
         """
         False
-        
-    def _subscribe(self, product_id: str):
-        """
-        Establishes connection to the Kraken websocket API and subscribes to the trades for the given `product_id`.
-        """
-        logger.info(f"Subscribing to {product_id} trades")
 
-        #let's subscribe to the trades for the given `product_id`
-        msg={
-            "method": "subscribe",
-            "params": {
-                "channel": "trade",
-                "symbol": [
-                    product_id
-                ],
-                "snapshot": False
+    def _subscribe(self, product_ids: List[str]):
+        """
+        Establish connection to the Kraken websocket API and subscribe to the trades for the given `product_ids`.
+        """
+        logger.info(f'Subscribing to trades for {product_ids}')
+        # let's subscribe to the trades for the given `product_id`
+        msg = {
+            'method': 'subscribe',
+            'params': {
+                'channel': 'trade',
+                'symbol': product_ids,
+                'snapshot': False,
             },
-        }        
-
+        }
         self._ws.send(json.dumps(msg))
-        logger.info(f'Subscribed successfully to {product_id} trades')
-        # for each product_id we dump
-        # the first two messages we got from the websocket, because they are not trades
-        # they are just confirmation messages of the subscription
-        for product_id in [product_id]:
-            _ = self._ws.recv()
-            _ = self._ws.recv()
-    
-    
+        logger.info('Subscription worked!')
 
-     
-    def is_done(self) -> bool:
-        """
-        Returns True if the API connection is closed and has no more trades to return.
-        """
-        return False
-    
+        # For each product_id we dump
+        # the first 2 messages we got from the websocket, because they contain
+        # no trade data, just confirmation on their end that the subscription was successful
+        for product_id in product_ids:
+            _ = self._ws.recv()
+            _ = self._ws.recv()
+
     @staticmethod
     def to_ms(timestamp: str) -> int:
         """

@@ -1,4 +1,5 @@
-name: feature-pipeline
+version: '3.7'
+name: backfill-pipeline
 networks:
   redpanda_network:
     external: true
@@ -11,8 +12,8 @@ services:
     networks:
       - redpanda_network
     env_file:
-      - ../services/trade_producer/live.prod.env
-
+      - ../services/trade_producer/historical.prod.env
+    restart: always
   trade_to_ohlc:
     build:
       context: ../services/trade_to_ohlc
@@ -20,8 +21,8 @@ services:
     networks:
       - redpanda_network
     env_file:
-      - ../services/trade_to_ohlc/live.prod.env
-  
+      - ../services/trade_to_ohlc/historical.prod.env
+    restart: always
   topic_to_feature_store:
     build:
       context: ../services/topic_to_feature_store
@@ -29,6 +30,6 @@ services:
     networks:
       - redpanda_network
     env_file:
-      - ../services/topic_to_feature_store/live.prod.env
+      - ../services/topic_to_feature_store/historical.prod.env
       - ../services/topic_to_feature_store/credentials.env
-      
+    restart: always 

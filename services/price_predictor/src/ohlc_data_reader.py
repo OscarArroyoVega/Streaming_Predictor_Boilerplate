@@ -58,8 +58,8 @@ class OhlcDataReader:
         primary_keys = [
             {
                 'product_id': product_id,
-                'timestamp': timestamp,
-            } for timestamp in timestamp_keys
+                'timestamp_ms': timestamp_ms,
+            } for timestamp_ms in timestamp_keys
         ]
         
         return primary_keys
@@ -96,7 +96,7 @@ class OhlcDataReader:
         )
 
         # features.sort_values(by='timestamp', inplace=True)
-        features = features.sort_values(by='timestamp').reset_index(drop=True)
+        features = features.sort_values(by='timestamp_ms').reset_index(drop=True)
 
         # breakpoint()
 

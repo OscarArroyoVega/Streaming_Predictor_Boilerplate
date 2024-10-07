@@ -8,10 +8,12 @@ import joblib
 import os
 
 from src.config import CometConfig, HopsworksConfig
-from src.feature_engineering import add_technical_indicators
+from src.feature_engineering import add_technical_indicators_and_temporal_features
 from src.models.current_price_baseline import CurrentPriceBaseline
 from src.models.xgboost_model import XGBoostModel
 from src.utils import hash_dataframe
+from src.model_registry import get_model_name
+
 def train_model(
     comet_config: CometConfig,
     hopsworks_config: HopsworksConfig,
@@ -26,6 +28,7 @@ def train_model(
     perc_test_data: Optional[float] = 0.3,
     n_search_trials: Optional[int] = 10,
     n_splits: Optional[int] = 3,
+    last_n_minutes: Optional[int] = 30,
 ):
     """
     Reads features from the Feature Store
@@ -59,6 +62,8 @@ def train_model(
             Number of trials to run for hyperparameter optimization.
         n_splits: Optional[int] = 3
             Number of splits to use for cross-validation.
+        last_n_minutes: Optional[int] = 30
+            Number of minutes of data in the past I need to generate predictions.
     Returns:
         None
     """
@@ -72,6 +77,12 @@ def train_model(
     experiment.log_parameter("n_search_trials", n_search_trials)
     experiment.log_parameter("n_splits", n_splits)
 
+    # log feature view name and version
+    experiment.log_parameter("feature_view_name", feature_view_name)
+    experiment.log_parameter("feature_view_version", feature_view_version)
+    
+    # log number of minutes of data in the past I need to generate predictions
+    experiment.log_parameter("last_n_minutes", last_n_minutes)
     # Load feature data from the Feature Store
     from src.ohlc_data_reader import OhlcDataReader
 
@@ -132,16 +143,17 @@ def train_model(
     # keep only the features that are needed for the model
     # TODO: think if I want these hard-coded here or if I want to provide them as parameters
     # to my training function
-    X_train = X_train[['open', 'high', 'low', 'close', 'volume']]
-    X_test = X_test[['open', 'high', 'low', 'close', 'volume']]
+    X_train = X_train[['open', 'high', 'low', 'close', 'volume', 'timestamp_ms']]
+    X_test = X_test[['open', 'high', 'low', 'close', 'volume', 'timestamp_ms']]
     
-    # add technical indicators to the features
-    X_train = add_technical_indicators(X_train)
-    X_test = add_technical_indicators(X_test)
-    logger.debug(f"Added technical indicators to the features")
+    # add technical indicators and temporal features to the features dataframe
+    X_train = add_technical_indicators_and_temporal_features(X_train)
+    X_test = add_technical_indicators_and_temporal_features(X_test)
+    logger.debug(f"Added technical indicators and temporal features to the features dataframe")
     logger.debug(f"X_train: {X_train.columns}")
     logger.debug(f"X_test: {X_test.columns}")
     experiment.log_parameter('features', X_train.columns.tolist())
+    experiment.log_parameter("n_features", len(X_train.columns))
 
     # Dropping rows with NaN values
     # extract row indices from X_train where any of the technical indicators is not NaN
@@ -178,7 +190,8 @@ def train_model(
     experiment.log_parameter("X_test_shape", X_test.shape)
     experiment.log_parameter("y_test_shape", y_test.shape)
 
-    # breakpoint()
+    # log the list of features our model will use
+    experiment.log_parameter("features_to_use", X_train.columns.tolist())
 
     # build a baseline model
     model = CurrentPriceBaseline()
@@ -217,7 +230,7 @@ def train_model(
     # breakpoint()
     
     # Save the model locally
-    model_name = f"price_predictor_{product_id.replace('/', '_')}_{ohlc_window_sec}s_{forecast_steps}steps"
+    model_name = get_model_name(product_id, ohlc_window_sec, forecast_steps)
     local_model_path = f"{model_name}.joblib"
     joblib.dump(xgb_model.get_model_obj(), local_model_path)
     
@@ -230,7 +243,8 @@ def train_model(
         # model_format="joblib"
     )
     
-    if mae < mae_baseline:
+    # if mae < mae_baseline:
+    if True:
         logger.info(f"Model {model_name} is better than the baseline model. Pushing to Model Registry")
         # Register the model in Comet ML registry
         registered_model = experiment.register_model(

@@ -63,17 +63,19 @@ def topic_to_feature_store(
                 continue
 
             value = msg.value()
-
+            logger.debug(f"Received message: {value}")  # for debugging
             # decode the message bytes into a dictionary
             value = json.loads(value.decode('utf-8'))
             
             # Append the message to the batch
             batch.append(value)
+            logger.info(f"Added message to batch. Current batch size: {len(batch)}")
             # If the batch is not full yet, continue polling
             if len(batch) < batch_size:
                 logger.debug(f'Batch has size {len(batch)} < {batch_size}...')
                 continue
             
+            logger.info(f'Batch full. Pushing {len(batch)} messages to Feature Store')
             logger.debug(f'Batch has size {len(batch)} >= {batch_size}... Pushing data to Feature Store')
             logger.debug(f'Batch: {batch}')
             # push the batch to the feature store
