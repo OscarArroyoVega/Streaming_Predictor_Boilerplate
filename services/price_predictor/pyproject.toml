@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "src"
+version = "0.1.0"
+description = ""
+authors = ["Oscar Arroyo Vega <arroscar@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+hopsworks = "^3.7.0"
+pydantic-settings = "^2.5.2"
+loguru = "^0.7.2"
+python-dotenv = "^1.0.1"
+pydantic = "^2.9.2"
+scikit-learn = "^1.5.2"
+comet-ml = "^3.46.0"
+xgboost = "^2.1.1"
+optuna = "^4.0.0"
+ta-lib = "^0.4.32"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
