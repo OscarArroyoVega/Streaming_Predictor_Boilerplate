@@ -1,7 +1,7 @@
 from loguru import logger
 
 def main():
-    logger.info("Start the trades service!")
+    logger.info("Strart trades service!")
 
 
 if __name__ == "__main__":
