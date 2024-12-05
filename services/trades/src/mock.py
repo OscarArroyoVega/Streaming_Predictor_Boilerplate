@@ -1,8 +1,7 @@
 # mock for kraken api
-from pydantic import BaseModel
-from typing import List
 from datetime import datetime
 from time import sleep
+from typing import List
 
 from .trade import Trade
 

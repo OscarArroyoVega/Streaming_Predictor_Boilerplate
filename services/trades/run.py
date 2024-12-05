@@ -1,8 +1,6 @@
+
 from loguru import logger
 from quixstreams import Application
-from typing import List
-
-from src.mock import KrakenMockApi
 from src.websocket import KrakenWebsocketApi
 
 

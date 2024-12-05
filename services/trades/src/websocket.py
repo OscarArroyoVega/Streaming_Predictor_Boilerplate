@@ -1,8 +1,10 @@
-from typing import List
-from websocket import create_connection
 import json
-from .trade import Trade
+from typing import List
+
 from loguru import logger
+from websocket import create_connection
+
+from .trade import Trade
 
 
 class KrakenWebsocketApi:
