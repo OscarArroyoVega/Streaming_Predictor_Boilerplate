@@ -1,7 +1,7 @@
 .env
 .python-version
 .venv
-__pycache__/
+__pycache__/*
 .DS_Store
 .idea
 .pytest_cache

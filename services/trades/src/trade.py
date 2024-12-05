@@ -14,4 +14,3 @@ class Trade(BaseModel):
 
     def to_dict(self) -> dict:
         return self.model_dump_json()
-      

@@ -1,6 +1,5 @@
 # Replace the problematic line with official Python image
-FROM python:3.12-slim-bookworm
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+FROM ghcr.io/astral-sh/uv:python3.10-bookworm-slim AS builder
 
 # Install the project into `/app`
 WORKDIR /app
