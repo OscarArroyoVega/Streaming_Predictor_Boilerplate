@@ -2,18 +2,11 @@
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime
+from time import sleep
 
-class Trade(BaseModel):
-    pair: str
-    price: float
-    volume: float
-    timestamp: datetime
-    timestamp_ms: int
-    
-    def to_dict(self) -> dict:
-        return self.model_dump()
-    
-class KrakenApi:
+from .trade import Trade
+
+class KrakenMockApi:
 
     def __init__(self,pair: str):
         self.pair = pair
@@ -25,4 +18,7 @@ class KrakenApi:
             Trade(pair=self.pair, price=0.5039, volume=32.0013 , timestamp=datetime(2024, 2, 12, 14, 43, 25, 123456), timestamp_ms=3),
             Trade(pair=self.pair, price=0.5030, volume=33.46326, timestamp=datetime(2024, 2, 12, 14, 43, 26, 123456), timestamp_ms=4),
         ]
+        
+        sleep(1)
+        
         return mock_trades
