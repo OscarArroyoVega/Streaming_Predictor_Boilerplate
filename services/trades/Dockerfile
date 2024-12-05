@@ -30,4 +30,3 @@ ENTRYPOINT []
 
 # Run the Python service
 CMD ["uv", "run", "run.py"]
-

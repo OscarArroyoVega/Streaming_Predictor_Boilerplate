@@ -3,4 +3,3 @@ start-redpanda:
 
 stop-redpanda:
 	docker-compose -f redpanda.yml down
-

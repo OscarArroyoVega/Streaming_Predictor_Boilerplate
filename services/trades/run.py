@@ -1,4 +1,3 @@
-
 from loguru import logger
 from quixstreams import Application
 from src.websocket import KrakenWebsocketApi
