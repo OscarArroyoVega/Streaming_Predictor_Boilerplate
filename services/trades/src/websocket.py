@@ -33,6 +33,7 @@ class KrakenWebsocketApi:
             
             # Skip heartbeat messages
             if data_dict.get('channel') == 'heartbeat':
+                logger.info("HEARTBEAT")
                 continue
             
             # Check if the message contains trade data
@@ -42,7 +43,7 @@ class KrakenWebsocketApi:
             else:
                 logger.warning("Received message without trade data")
                 continue
-
+                
         trades = [Trade(
             pair=trade["symbol"],
             price=trade["price"],
