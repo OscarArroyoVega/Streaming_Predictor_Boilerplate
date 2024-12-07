@@ -8,7 +8,7 @@ class Config(BaseSettings):
     kafka_output_topic: str
     kafka_consumer_group: str
     candle_interval_seconds: int
-    pairs: list[str]
+    emit_incomplete_candles: bool
 
 
 config = Config()

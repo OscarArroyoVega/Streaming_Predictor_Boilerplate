@@ -63,6 +63,7 @@ def main(
     kafka_output_topic: str,
     kafka_consumer_group: str,
     candle_interval_seconds: int,
+    emit_incomplete_candles: bool,
 ):
     """
     Main function to run the candles service.
@@ -112,7 +113,10 @@ def main(
     # 2. define the reduce operation or initial value with the first trade
     sdf = sdf.reduce(reducer=update_candle, initializer=init_candle)
     # 3. emit all the intermediate results to have more granularity
-    sdf = sdf.current()
+    if config.emit_incomplete_candles:
+        sdf = sdf.current()
+    else:
+        sdf = sdf.final()
 
     # extract open, high, low, close, volume, timestamp_ms, pair from the dataframe
     sdf['open'] = sdf['value']['open']
@@ -159,4 +163,5 @@ if __name__ == '__main__':
         kafka_output_topic=config.kafka_output_topic,
         kafka_consumer_group=config.kafka_consumer_group,
         candle_interval_seconds=config.candle_interval_seconds,
+        emit_incomplete_candles=config.emit_incomplete_candles,
     )
