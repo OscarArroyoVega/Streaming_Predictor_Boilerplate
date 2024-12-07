@@ -1,6 +1,6 @@
+from kraken_api.websocket import KrakenWebsocketApi
 from loguru import logger
 from quixstreams import Application
-from src.websocket import KrakenWebsocketApi
 
 
 def main(kafka_broker_address: str, kafka_topic: str, kraken_api: KrakenWebsocketApi):
@@ -28,7 +28,9 @@ def main(kafka_broker_address: str, kafka_topic: str, kraken_api: KrakenWebsocke
             trades = kraken_api.get_trade_data()
 
             for trade in trades:
-                message = topic.serialize(key=trade.pair, value=trade.to_dict())
+                trade = trade.to_dict()
+                logger.debug(f'trade: {trade}')
+                message = topic.serialize(key=trade['pair'], value=trade)
                 producer.produce(topic=topic.name, value=message.value, key=message.key)
 
                 logger.info(f'Pushed trade to kafka topic: {trade}')

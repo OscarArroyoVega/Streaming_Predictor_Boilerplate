@@ -14,4 +14,4 @@ class Trade(BaseModel):
         return int(self.timestamp.timestamp() * 1000)
 
     def to_dict(self) -> dict:
-        return self.model_dump_json()
+        return self.model_dump(exclude={'timestamp'})
