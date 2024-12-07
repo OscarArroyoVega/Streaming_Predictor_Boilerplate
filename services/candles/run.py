@@ -62,7 +62,7 @@ def main(
     kafka_input_topic: str,
     kafka_output_topic: str,
     kafka_consumer_group: str,
-    candle_interval_seconds: int,
+    candle_interval_seconds: int,  # TODO add many other services for other intervals (1hour, 15minutes, 1 day...)
     emit_incomplete_candles: bool,
 ):
     """
@@ -113,8 +113,9 @@ def main(
     # 2. define the reduce operation or initial value with the first trade
     sdf = sdf.reduce(reducer=update_candle, initializer=init_candle)
     # 3. emit all the intermediate results to have more granularity
-    if config.emit_incomplete_candles:
+    if emit_incomplete_candles:
         sdf = sdf.current()
+
     else:
         sdf = sdf.final()
 
@@ -145,7 +146,9 @@ def main(
     ]
 
     # print the value
-    sdf = sdf.update(lambda value: logger.info(f'value: {value}'))
+    sdf = sdf.update(
+        lambda value: logger.info(f'candle {candle_interval_seconds} seconds: {value}')
+    )
 
     # push the candle to the output topic
     sdf = sdf.to_topic(output_topic)
