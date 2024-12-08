@@ -11,7 +11,7 @@ def compute_technical_indicators(candle: dict, state: State) -> dict:
     candles = state.get('candles', default=[])
 
     # extract open, high, low, close, volume from the candles
-    open = np.array([candle['open'] for candle in candles])
+    # open = np.array([candle['open'] for candle in candles])
     high = np.array([candle['high'] for candle in candles])
     low = np.array([candle['low'] for candle in candles])
     close = np.array([candle['close'] for candle in candles])
@@ -20,65 +20,46 @@ def compute_technical_indicators(candle: dict, state: State) -> dict:
     indicators = {}
 
     # compute the technical indicators
-    sma_14 = stream.SMA(close, timeperiod=14)
-    indicators['sma_14'] = sma_14
+    # Simple Moving Average - Shows average price over period
+    indicators['sma_14'] = stream.SMA(close, timeperiod=14)
 
-    rsi_9 = stream.RSI(close, timeperiod=9)
-    indicators['rsi_9'] = rsi_9
+    # Relative Strength Index - Momentum indicator showing overbought/oversold conditions
+    indicators['rsi_9'] = stream.RSI(close, timeperiod=9)
+    indicators['rsi_14'] = stream.RSI(close, timeperiod=14)
+    indicators['rsi_21'] = stream.RSI(close, timeperiod=21)
+    indicators['rsi_28'] = stream.RSI(close, timeperiod=28)
 
-    rsi_14 = stream.RSI(close, timeperiod=14)
-    indicators['rsi_14'] = rsi_14
-
-    rsi_21 = stream.RSI(close, timeperiod=21)
-    indicators['rsi_21'] = rsi_21
-
-    rsi_28 = stream.RSI(close, timeperiod=28)
-    indicators['rsi_28'] = rsi_28
-
-    macd_10 = stream.MACD(close, fastperiod=10, slowperiod=24, signalperiod=9)
-    indicators['macd_10'] = macd_10
-
-    upper_band_10, middle_band_10, lower_band_10 = stream.BBANDS(
-        close, timeperiod=10, nbdevup=2, nbdevdn=2
+    # Moving Average Convergence Divergence - Trend-following momentum indicator
+    indicators['macd_10'] = stream.MACD(
+        close, fastperiod=10, slowperiod=24, signalperiod=9
     )
-    indicators['upper_band_10'] = upper_band_10
-    indicators['middle_band_10'] = middle_band_10
-    indicators['lower_band_10'] = lower_band_10
 
-    upper_band_15, middle_band_15, lower_band_15 = stream.BBANDS(
-        close, timeperiod=15, nbdevup=2, nbdevdn=2
-    )
-    indicators['upper_band_15'] = upper_band_15
-    indicators['middle_band_15'] = middle_band_15
-    indicators['lower_band_15'] = lower_band_15
+    # Bollinger Bands - Shows volatility channels around moving average
+    for period in [10, 15, 20]:
+        upper, middle, lower = stream.BBANDS(
+            close, timeperiod=period, nbdevup=2, nbdevdn=2
+        )
+        indicators[f'upper_band_{period}'] = upper
+        indicators[f'middle_band_{period}'] = middle
+        indicators[f'lower_band_{period}'] = lower
 
-    upper_band_20, middle_band_20, lower_band_20 = stream.BBANDS(
-        close, timeperiod=20, nbdevup=2, nbdevdn=2
-    )
-    indicators['upper_band_20'] = upper_band_20
-    indicators['middle_band_20'] = middle_band_20
-    indicators['lower_band_20'] = lower_band_20
+    # Average Directional Index - Measures trend strength
+    indicators['adx_14'] = stream.ADX(high, low, close, timeperiod=14)
 
-    adx_14 = stream.ADX(high, low, close, timeperiod=14)
-    indicators['adx_14'] = adx_14
+    # Exponential Moving Average - Weighted moving average emphasizing recent prices
+    indicators['ema_10'] = stream.EMA(close, timeperiod=10)
 
-    ema_10 = stream.EMA(close, timeperiod=10)
-    indicators['ema_10'] = ema_10
+    # Average True Range - Measures market volatility
+    indicators['atr_14'] = stream.ATR(high, low, close, timeperiod=14)
 
-    atr_14 = stream.ATR(high, low, close, timeperiod=14)
-    indicators['atr_14'] = atr_14
+    # Price Rate of Change - Momentum indicator showing price changes over time
+    indicators['price_roc_10'] = stream.ROC(close, timeperiod=10)
 
-    price_roc_10 = stream.ROC(close, timeperiod=10)
-    indicators['price_roc_10'] = price_roc_10
+    # Money Flow Index - Volume-weighted RSI
+    indicators['mfi_14'] = stream.MFI(high, low, close, volume, timeperiod=14)
 
-    mfi_14 = stream.MFI(high, low, close, volume, timeperiod=14)
-    indicators['mfi_14'] = mfi_14
-
-    willr_14 = stream.WILLR(high, low, close, timeperiod=14)
-    indicators['willr_14'] = willr_14
-
-    cdl_pattern = stream.CDL2CROWS(open, high, low, close)
-    indicators['cdl_pattern'] = cdl_pattern
+    # Williams %R - Momentum indicator similar to RSI but scaled -100 to 0
+    indicators['willr_14'] = stream.WILLR(high, low, close, timeperiod=14)
 
     final_message = {
         **candle,

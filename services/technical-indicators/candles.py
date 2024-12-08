@@ -5,7 +5,7 @@ from quixstreams import State
 max_candles_in_state = config.num_candles_in_state
 
 
-def update_candles(candle: dict, state: State) -> State:
+def update_candles(candle: dict, state: State) -> dict:
     """
     Updates the list of candles we have in the state using the new candle,
     if the latest candle corresponds to a new window of candles, we append it to the list
@@ -33,9 +33,12 @@ def update_candles(candle: dict, state: State) -> State:
 
     # TODO: Check the candles have no missing windows. this can happen if the stream has small trade rates
     logger.debug(f'Number of candles in state for {candle["pair"]}: {len(candles)}')
+
     # Update the state with the new list of candles
     state.set('candles', candles)
-    return f'last candle: {candles[-1:]}'
+
+    # Return the latest candle
+    return candle
 
 
 def count_candles(value: dict, state: State) -> int:
