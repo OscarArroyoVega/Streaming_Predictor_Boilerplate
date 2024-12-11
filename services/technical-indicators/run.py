@@ -9,6 +9,8 @@ def main(
     kafka_input_topic: str,
     kafka_output_topic: str,
     kafka_consumer_group: str,
+    candle_interval_seconds: int,
+    num_candles_in_state: int,
 ):
     """
     Main function to start the technical-indicators service. 3 steps:
@@ -22,6 +24,7 @@ def main(
         kafka_output_topic: The topic to output technical indicators to
         kafka_consumer_group: The consumer group to use for the Kafka consumer
         max_candles_in_state: The number of candles to keep in the state
+        candle_interval_secconds
 
     Returns:
         None
@@ -36,6 +39,9 @@ def main(
     input_topic = app.topic(name=kafka_input_topic, value_deserializer='json')
     output_topic = app.topic(name=kafka_output_topic, value_serializer='json')
     sdf = app.dataframe(topic=input_topic)
+
+    # we only want to keep the candles with the same window size as the candle_interval_seconds
+    sdf = sdf[sdf['candle_interval_seconds'] == candle_interval_seconds]
 
     # Update the state with the new candle
     sdf = sdf.apply(update_candles, stateful=True)
@@ -60,4 +66,6 @@ if __name__ == '__main__':
         kafka_input_topic=config.kafka_input_topic,
         kafka_output_topic=config.kafka_output_topic,
         kafka_consumer_group=config.kafka_consumer_group,
+        candle_interval_seconds=config.candle_interval_seconds,
+        num_candles_in_state=config.num_candles_in_state,
     )

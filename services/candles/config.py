@@ -8,6 +8,7 @@ class Config(BaseSettings):
     kafka_output_topic: str
     kafka_consumer_group: str
     candle_interval_seconds: int
+    max_candles_in_state: int
     emit_incomplete_candles: bool
 
 

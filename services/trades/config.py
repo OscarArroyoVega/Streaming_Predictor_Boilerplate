@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -10,6 +10,7 @@ class Config(BaseSettings):
     kafka_broker_address: str
     kafka_topic: str
     pairs: List[str]
+    data_source: Literal['live', 'historical', 'test']
 
 
 config = Config()

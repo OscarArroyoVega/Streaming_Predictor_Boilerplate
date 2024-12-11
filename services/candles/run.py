@@ -62,6 +62,7 @@ def main(
     kafka_input_topic: str,
     kafka_output_topic: str,
     kafka_consumer_group: str,
+    max_candles_in_state: int,
     candle_interval_seconds: int,  # TODO add many other services for other intervals (1hour, 15minutes, 1 day...)
     emit_incomplete_candles: bool,
 ):
@@ -78,12 +79,13 @@ def main(
         kafka_output_topic (_type_, optional): Defaults to config.kafka_output_topic.
         kafka_consumer_group (_type_, optional): Defaults to config.kafka_consumer_group.
         candle_interval_seconds (_type_, optional): Defaults to config.candle_interval_seconds.
-
+        max_candles_in_state (_type_, optional): Defaults to config.max_candles_in_state.
+        emit_incomplete_candles (_type_, optional): Defaults to config.emit_incomplete_candles.
     Returns:
         None
     """
     logger.info(
-        f'Hello from candles service! {kafka_broker_address} {kafka_input_topic} {kafka_output_topic} {kafka_consumer_group} {candle_interval_seconds} '
+        f'Hello from candles service! {kafka_broker_address} {kafka_input_topic} {kafka_output_topic} {kafka_consumer_group} {candle_interval_seconds} {max_candles_in_state}'
     )
 
     # Initialize application
@@ -145,6 +147,8 @@ def main(
         ]
     ]
 
+    sdf['candle_interval_seconds'] = candle_interval_seconds
+
     # print the value
     sdf = sdf.update(
         lambda value: logger.info(f'candle {candle_interval_seconds} seconds: {value}')
@@ -167,4 +171,5 @@ if __name__ == '__main__':
         kafka_consumer_group=config.kafka_consumer_group,
         candle_interval_seconds=config.candle_interval_seconds,
         emit_incomplete_candles=config.emit_incomplete_candles,
+        max_candles_in_state=config.max_candles_in_state,
     )
