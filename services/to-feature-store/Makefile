@@ -23,7 +23,7 @@ docker-run: docker-build
 build-multistage:
 	docker build -f multistage.Dockerfile -t to-feature-store:multistage . # TODO: optimize docker file with multistage build https://github.com/Real-World-ML/real-time-ml-system-cohort-3/blob/main/services/trades/multistage.Dockerfile
 
-run-multistage: build-multistage # TODO: optimize docker file with multistage build https://github.com/Real-World-ML/real-time-ml-system-cohort-3/blob/main/services/trades/multistage.Dockerfile
+run-multistage: build-multistage
 	docker run -it \
 		--network redpanda_network \
 		-e KAFKA_BROKER_ADDRESS=redpanda:9092 \
