@@ -3,10 +3,11 @@ from datetime import datetime
 from time import sleep
 from typing import List
 
+from .base import TradesAPI
 from .trade import Trade
 
 
-class KrakenMockApi:
+class KrakenMockAPI(TradesAPI):
     def __init__(self, pair: str):
         self.pair = pair
 

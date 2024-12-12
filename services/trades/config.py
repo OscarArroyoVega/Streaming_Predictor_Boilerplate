@@ -11,6 +11,7 @@ class Config(BaseSettings):
     kafka_topic: str
     pairs: List[str]
     data_source: Literal['live', 'historical', 'test']
+    last_n_days: int
 
 
 config = Config()

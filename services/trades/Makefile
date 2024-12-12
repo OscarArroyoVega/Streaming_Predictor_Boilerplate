@@ -1,9 +1,22 @@
 # Run locally
-run-dev:
+run-dev-live:
+	copy live.settings.env settings.env
 	uv run python run.py
 
 # Run with docker
-run: build
+run-live: build
+	docker run -it \
+		--network redpanda_network \
+		-e KAFKA_BROKER_ADDRESS=redpanda:9092 \
+		trades
+
+# Run locally
+run-dev-historical:
+	copy historical.settings.env settings.env
+	uv run python run.py
+
+# Run with docker
+run-historical: build
 	docker run -it \
 		--network redpanda_network \
 		-e KAFKA_BROKER_ADDRESS=redpanda:9092 \

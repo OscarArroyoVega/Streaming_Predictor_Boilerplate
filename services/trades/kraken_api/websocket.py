@@ -4,10 +4,11 @@ from typing import List
 from loguru import logger
 from websocket import create_connection
 
+from .base import TradesAPI
 from .trade import Trade
 
 
-class KrakenWebsocketApi:
+class KrakenWebsocketApi(TradesAPI):
     """
     Websocket client for connecting to Kraken's real-time trade data API.
     """
@@ -58,6 +59,12 @@ class KrakenWebsocketApi:
         ]
 
         return trades
+
+    def is_done(self) -> bool:
+        """
+        Check if the websocket connection is done
+        """
+        return False
 
     def _subscribe(self):
         """

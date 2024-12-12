@@ -1,12 +1,14 @@
-from datetime import datetime
+from abc import ABC, abstractmethod
+from typing import List
+
+from .trade import Trade
 
 
-class KrakenRestAPI:
-    def __init__(self):
+class TradesAPI(ABC):
+    @abstractmethod
+    def get_trade_data(self) -> List[Trade]:
         pass
 
-    def get_trades(self, pair: str, start_time: datetime, end_time: datetime):
-        pass
-
-    def is_done(self):
+    @abstractmethod
+    def is_done(self) -> bool:
         pass
