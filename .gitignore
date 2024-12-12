@@ -1,16 +1,20 @@
-.env
-.python-version
-.venv
-__pycache__/*
-.DS_Store
-.idea
-.pytest_cache
-.pytest_cache/
+# Python
+__pycache__/
+*.py[cod]   # This catches .pyc, .pyo, and .pyd files
 *.pyc
-*/state/*
+*$py.class
+.pytest_cache/
+.python-version
+.venv/
+
+# Environment and credentials
+.env
+.credentials/
+**/hopsworks_credentials.env
+
+# State files
 state/
-state/*
-.credentials
-.credentials/*
-/.credentials
-**/.credentials
+
+# IDE and System files
+.idea/
+.DS_Store
