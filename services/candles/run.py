@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Literal, Optional, Tuple
 
 from loguru import logger
 from quixstreams import Application
@@ -62,9 +62,9 @@ def main(
     kafka_input_topic: str,
     kafka_output_topic: str,
     kafka_consumer_group: str,
-    max_candles_in_state: int,
     candle_interval_seconds: int,  # TODO add many other services for other intervals (1hour, 15minutes, 1 day...)
     emit_incomplete_candles: bool,
+    data_source: Literal['live', 'historical'],
 ):
     """
     Main function to run the candles service.
@@ -79,18 +79,20 @@ def main(
         kafka_output_topic (_type_, optional): Defaults to config.kafka_output_topic.
         kafka_consumer_group (_type_, optional): Defaults to config.kafka_consumer_group.
         candle_interval_seconds (_type_, optional): Defaults to config.candle_interval_seconds.
-        max_candles_in_state (_type_, optional): Defaults to config.max_candles_in_state.
         emit_incomplete_candles (_type_, optional): Defaults to config.emit_incomplete_candles.
+        data_source (_type_, optional): Defaults to config.data_source.
     Returns:
         None
     """
     logger.info(
-        f'Hello from candles service! {kafka_broker_address} {kafka_input_topic} {kafka_output_topic} {kafka_consumer_group} {candle_interval_seconds} {max_candles_in_state}'
+        f'Hello from candles service! {kafka_broker_address} {kafka_input_topic} {kafka_output_topic} {kafka_consumer_group} {candle_interval_seconds} {data_source}'
     )
 
     # Initialize application
     app = Application(
-        broker_address=kafka_broker_address, consumer_group=kafka_consumer_group
+        broker_address=kafka_broker_address,
+        consumer_group=kafka_consumer_group,
+        auto_offset_reset='earliest' if data_source == 'historical' else 'latest',
     )
 
     # Define input topic
@@ -171,5 +173,5 @@ if __name__ == '__main__':
         kafka_consumer_group=config.kafka_consumer_group,
         candle_interval_seconds=config.candle_interval_seconds,
         emit_incomplete_candles=config.emit_incomplete_candles,
-        max_candles_in_state=config.max_candles_in_state,
+        data_source=config.data_source,
     )

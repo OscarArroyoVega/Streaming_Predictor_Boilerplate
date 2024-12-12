@@ -1,3 +1,5 @@
+from typing import Literal
+
 from loguru import logger
 from quixstreams import Application
 from sinks import HopsworksSink
@@ -8,16 +10,25 @@ def main(
     kafka_input_topic: str,
     kafka_consumer_group: str,
     output_sink: HopsworksSink,
+    data_source: Literal['live', 'historical'],
 ):
     """
     Main function to run the to-feature-store service.
     1. Read messages from kafka and push them to the feature store.
     2. Push the messages to the feature group.
+    Args:
+        kafka_broker_address: The address of the Kafka broker
+        kafka_input_topic: The topic to consume messages from
+        kafka_consumer_group: The consumer group to use for the Kafka consumer
+        output_sink: The sink to write the messages to
+        data_source: The data source to use for the to-feature-store service
     """
     logger.info('Starting to-feature-store service!')
 
     app = Application(
-        broker_address=kafka_broker_address, consumer_group=kafka_consumer_group
+        broker_address=kafka_broker_address,
+        consumer_group=kafka_consumer_group,
+        auto_offset_reset='earliest' if data_source == 'historical' else 'latest',
     )
 
     input_topic = app.topic(kafka_input_topic, value_deserializer='json')
@@ -54,4 +65,5 @@ if __name__ == '__main__':
         kafka_consumer_group=config.kafka_consumer_group,
         # Output sink settings
         output_sink=hopsworks_sink,
+        data_source=config.data_source,
     )

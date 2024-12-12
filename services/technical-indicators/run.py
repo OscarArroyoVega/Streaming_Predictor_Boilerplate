@@ -1,3 +1,5 @@
+from typing import Literal
+
 from candles import update_candles
 from loguru import logger
 from quixstreams import Application
@@ -11,6 +13,7 @@ def main(
     kafka_consumer_group: str,
     candle_interval_seconds: int,
     num_candles_in_state: int,
+    data_source: Literal['live', 'historical'],
 ):
     """
     Main function to start the technical-indicators service. 3 steps:
@@ -25,6 +28,7 @@ def main(
         kafka_consumer_group: The consumer group to use for the Kafka consumer
         max_candles_in_state: The number of candles to keep in the state
         candle_interval_secconds
+        data_source: The data source to use for the technical indicators service
 
     Returns:
         None
@@ -32,7 +36,9 @@ def main(
     logger.info('Starting technical-indicators service...')
 
     app = Application(
-        broker_address=kafka_broker_address, consumer_group=kafka_consumer_group
+        broker_address=kafka_broker_address,
+        consumer_group=kafka_consumer_group,
+        auto_offset_reset='earliest' if data_source == 'historical' else 'latest',
     )
 
     # Create a dataframe from the input topic
@@ -68,4 +74,5 @@ if __name__ == '__main__':
         kafka_consumer_group=config.kafka_consumer_group,
         candle_interval_seconds=config.candle_interval_seconds,
         num_candles_in_state=config.num_candles_in_state,
+        data_source=config.data_source,
     )
