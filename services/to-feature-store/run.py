@@ -31,6 +31,15 @@ def main(
         auto_offset_reset='earliest' if data_source == 'historical' else 'latest',
     )
 
+    # Clear the state before starting in historical pipeline
+    if data_source == 'historical':
+        logger.info('Clearing application state...')
+        try:
+            app.clear_state()
+            logger.info('Application state cleared!')
+        except FileNotFoundError:
+            logger.info('No state directory found to clear. Continuing...')
+
     input_topic = app.topic(kafka_input_topic, value_deserializer='json')
 
     # Read the data from the input topic
@@ -57,7 +66,9 @@ if __name__ == '__main__':
         feature_group_version=config.feature_group_version,
         feature_group_primary_keys=config.feature_group_primary_keys,
         feature_group_event_time=config.feature_group_event_time,
+        feature_group_materialization_minutes=config.feature_group_materialization_minutes,
     )
+
     main(
         # Kafka settings
         kafka_broker_address=config.kafka_broker_address,
