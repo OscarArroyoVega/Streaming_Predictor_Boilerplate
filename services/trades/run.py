@@ -54,7 +54,9 @@ if __name__ == '__main__':
     if config.data_source == 'live':
         kraken_api = KrakenWebsocketApi(pairs=config.pairs)
     elif config.data_source == 'historical':
-        kraken_api = KrakenRestAPI(pairs=config.pairs, last_n_days=config.last_n_days)
+        kraken_api = KrakenRestAPI(
+            pairs=config.pairs, last_n_days=config.last_n_days
+        )  # TODO implement as a Quix streams stateful Source, now the backfilling is done in the to-feature-store service
     elif config.data_source == 'test':
         kraken_api = KrakenMockAPI(pairs=config.pairs)
     else:

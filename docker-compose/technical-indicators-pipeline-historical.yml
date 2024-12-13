@@ -35,7 +35,7 @@ services:
       - CANDLE_INTERVAL_SECONDS=60
       - EMIT_INCOMPLETE_CANDLES=False
       - DATA_SOURCE=historical
-    restart: on-failure
+    # TODO restart: on-failure // add a retry mechanism LINKED WITH THE QUIX STREAMS STATEFUL SOURCE METHOD in run.py
     networks:
       - redpanda-network
 

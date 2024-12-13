@@ -10,10 +10,6 @@ def compute_technical_indicators(candle: dict, state: State) -> dict:
 
     candles = state.get('candles', default=[])
 
-    # Check if we have enough data points
-    if len(candles) < 30:  # Minimum length needed for longest indicator
-        return candle
-
     # extract open, high, low, close, volume from the candles
     # open = np.array([candle['open'] for candle in candles])
     high = np.array([candle['high'] for candle in candles])
@@ -85,4 +81,4 @@ def compute_technical_indicators(candle: dict, state: State) -> dict:
     if indicators:
         final_message.update(indicators)
 
-    return final_message
+    return final_message  # FIXME many technical indicators have NaN values, many of them in offline store!
