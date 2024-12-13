@@ -18,3 +18,5 @@ state/
 # IDE and System files
 .idea/
 .DS_Store
+
+.last_run_id
