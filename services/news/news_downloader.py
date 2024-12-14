@@ -17,8 +17,21 @@ class News(BaseModel):
     # url: str
     # TODO also pick the URL and expand the context to feed the LLM
 
+    def to_dict(self) -> dict:
+        # convert the published_at to a string
+        published_str = self.published_at.isoformat()
+        published_str = published_str.replace('Z', '+00:00')
+        timestamp_ms = int(datetime.fromisoformat(published_str).timestamp() * 1000)
+        data = self.model_dump(mode='json')
+        data['timestamp_ms'] = timestamp_ms
+        return data
+
 
 class NewsDownloader:
+    """
+    this is the class that fetches news from Cryptopanic API
+    """
+
     URL = 'https://cryptopanic.com/api/v1/posts/'
 
     def __init__(self, cryptopanic_api_key: str):

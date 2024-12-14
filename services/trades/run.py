@@ -49,6 +49,10 @@ def main(
 
 
 if __name__ == '__main__':
+    import sys
+    from pathlib import Path
+
+    sys.path.append(str(Path(__file__).parent))
     from config import config
 
     if config.data_source == 'live':
