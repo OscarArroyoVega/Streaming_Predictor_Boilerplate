@@ -20,7 +20,7 @@ class CryptopanicConfig(BaseSettings):
     Config class for the cryptopanic api
     """
 
-    model_config = SettingsConfigDict(env_file='cryptopanic.credentials.env')
+    model_config = SettingsConfigDict(env_file='cryptopanic_credentials.env')
     cryptopanic_api_key: str
 
 

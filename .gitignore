@@ -11,6 +11,8 @@ __pycache__/
 .env
 .credentials/
 **/hopsworks_credentials.env
+**/cryptopanic_credentials.env
+
 
 # State files
 state/
