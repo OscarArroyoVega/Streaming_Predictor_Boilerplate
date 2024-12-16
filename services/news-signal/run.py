@@ -30,15 +30,25 @@ def main(
 
     sdf = app.dataframe(input_topic)
 
-    # Process the incoming news into a news signal
-    sdf = sdf.apply(
-        lambda value: {
-            'news': value['title'],
-            **llm.get_signal(value['title']),
-            'model_name': llm.model_name,
-            'timestamp_ms': value['timestamp_ms'],
-        }
-    )
+    def process_news_signal(value: dict, llm: BaseNewsSignalExtractor) -> dict:
+        logger.debug(f'Processing value: {value}')
+        try:
+            news_title = value.get('title', '')
+            logger.debug(f'News title: {news_title}')
+            signal = llm.get_signal(news_title)
+            logger.debug(f'Signal: {signal}')
+            return {
+                'news': news_title,
+                'model_name': llm.model_name,
+                'timestamp_ms': value['timestamp_ms'],
+                **signal,
+            }
+        except Exception as e:
+            logger.error(f'Error processing news signal: {str(e)}')
+            raise
+
+    # Use the function in the dataframe transformation
+    sdf = sdf.apply(lambda value: process_news_signal(value, llm))
 
     sdf = sdf.update(lambda value: logger.debug(f'Final message: {value}'))
 

@@ -921,6 +921,7 @@ dependencies = [
     { name = "llama-index-llms-anthropic" },
     { name = "llama-index-llms-ollama" },
     { name = "loguru" },
+    { name = "ollama" },
     { name = "pydantic" },
     { name = "quixstreams" },
 ]
@@ -931,6 +932,7 @@ requires-dist = [
     { name = "llama-index-llms-anthropic", specifier = ">=0.6.1" },
     { name = "llama-index-llms-ollama", specifier = ">=0.5.0" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "ollama", specifier = ">=0.4.4" },
     { name = "pydantic", specifier = ">=2.10.3" },
     { name = "quixstreams", specifier = ">=3.4.0" },
 ]

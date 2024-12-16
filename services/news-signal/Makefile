@@ -7,6 +7,12 @@ run-claude:
 run-ollama:
 	uv run python -m llms.ollama
 
+start-ollama:
+	ollama serve
+
+stop-ollama:
+	ollama stop
+
 build:
 	docker build -f Dockerfile -t news-signal .
 

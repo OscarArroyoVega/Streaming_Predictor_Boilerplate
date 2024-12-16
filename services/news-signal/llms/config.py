@@ -9,4 +9,4 @@ class AnthropicConfig(BaseSettings):
 
 class OllamaConfig(BaseSettings):
     model_config = SettingsConfigDict(env_file='ollama.env')
-    model_name: str = 'llama3.1'
+    llm_name: str = 'mistral'
