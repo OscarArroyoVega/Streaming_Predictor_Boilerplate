@@ -1,0 +1,15 @@
+[project]
+name = "news-signal"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "llama-index-core>=0.12.5",
+    "llama-index-llms-anthropic>=0.5.0",
+    "pydantic>=2.10.3",
+    "pydantic-settings>=2.6.1",
+    "quixstreams>=3.4.0",
+    "loguru>=0.7.3",
+    "llama-index-llms-ollama>=0.5.0",
+]
