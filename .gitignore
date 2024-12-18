@@ -15,6 +15,7 @@ __pycache__/
 **credentials.env
 **/openai_credentials.env
 **/anthropic_credentials.env
+**/ollama.env
 
 # State files
 state/

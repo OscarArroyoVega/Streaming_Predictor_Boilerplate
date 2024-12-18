@@ -1,4 +1,3 @@
-import json
 from typing import Literal, Optional
 
 from llama_index.core.prompts import PromptTemplate
@@ -13,76 +12,79 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
         self,
         model_name: str,
         temperature: Optional[float] = 0,
-        timeout: float = 120.0,
-        max_retries: int = 3,
     ):
-        self.llm = Ollama(model=model_name, temperature=temperature, timeout=timeout)
+        self.llm = Ollama(
+            model=model_name,
+            temperature=temperature,
+        )
 
         self.prompt_template = PromptTemplate(
-            template="""You are a cryptocurrency market analyst. Analyze this news article and provide signals for BTC and ETH prices.
+            template="""
+            You are an expert crypto financial analyst with deep knowledge of market dynamics and sentiment analysis.
+            Analyze the following news story and determine its potential impact on crypto asset prices.
+            Focus on both direct mentions and indirect implications for each asset.
 
-            Article: {news_article}
+            Do not output data for a given coin if the news is not relevant to it.
 
-            Rules:
-            1. Signal values must be EXACTLY one of these integers:
-            - 1  (BULLISH: positive impact)
-            - 0  (NEUTRAL: no significant impact)
-            -1  (BEARISH: negative impact)
+            ## Example input
+            "Goldman Sachs wants to invest in Bitcoin and Ethereum, but not in XRP"
 
-            2. Provide a brief, factual reasoning (max 150 characters)
-            3. Return only a JSON object with this exact structure:
-            {
-                "btc_signal": Literal[-1, 0, 1],  # -1=bearish, 0=neutral, 1=bullish
-                "eth_signal": Literal[-1, 0, 1],  # -1=bearish, 0=neutral, 1=bullish
-                "reasoning": "string"
-            }
+            ## Example output
+            [
+                {"coin": "BTC", "signal": 1},
+                {"coin": "ETH", "signal": 1},
+                {"coin": "XRP", "signal": -1},
+            ]
 
-            Example response:
-            {
-                "btc_signal": 1,
-                "eth_signal": 0,
-                "reasoning": "Bitcoin ETF approval news directly impacts BTC market sentiment, while having minimal effect on ETH"
-            }
+            News story to analyze:
+            {news_story}
             """
         )
 
         self.model_name = model_name
-        self.max_retries = max_retries
 
     def get_signal(
-        self, text: str, output_format: Literal['dict', 'NewsSignal'] = 'dict'
-    ) -> NewsSignal | dict:
-        for attempt_num in range(self.max_retries):
-            try:
-                # Get raw response from LLM
-                response = self.llm.complete(
-                    prompt=self.prompt_template.format(news_article=text)
-                )
-                logger.debug(f'Response: {response}')
-                # Parse the response text as JSON
-                response_dict = json.loads(response.text)
-                logger.debug(f'Response dict: {response_dict}')
-                # Create NewsSignal object
-                news_signal = NewsSignal(
-                    btc_signal=response_dict['btc_signal'],
-                    eth_signal=response_dict['eth_signal'],
-                    reasoning=response_dict['reasoning'],
-                )
+        self,
+        text: str,
+        output_format: Literal['dict', 'NewsSignal'] = 'NewsSignal',
+    ) -> dict | NewsSignal:
+        """
+        Get the news signal from the given `text`
 
-                if output_format == 'dict':
-                    return news_signal.to_dict()
-                return news_signal
+        Args:
+            text: The news article to get the signal from
+            output_format: The format of the output
 
-            except (json.JSONDecodeError, KeyError) as e:
-                raise ValueError(f'Failed to parse LLM response: {str(e)}') from e
+        Returns:
+            The news signal
+        """
+        try:
+            # Add logging before the request
+            logger.debug(f'Sending request to Ollama with model: {self.model_name}')
 
-            except Exception as e:
-                if attempt_num < self.max_retries - 1:
-                    logger.warning(
-                        f'Timeout on attempt {attempt_num + 1}/{self.max_retries}, retrying...'
-                    )
-                logger.error(f'Unexpected error: {str(e)}')
-                raise
+            response: NewsSignal = self.llm.structured_predict(
+                NewsSignal,
+                prompt=self.prompt_template,
+                news_story=text,
+            )
+
+            # Add logging after the response
+            logger.debug(f'Raw response from Ollama: {response}')
+
+            # keep only news signals with non-zero signal
+            response.news_signals = [
+                news_signal
+                for news_signal in response.news_signals
+                if news_signal.signal != 0
+            ]
+
+            if output_format == 'dict':
+                return response.to_dict()
+            else:
+                return response
+        except Exception as e:
+            logger.error(f'Error in get_signal: {str(e)}')
+            raise
 
 
 if __name__ == '__main__':
@@ -91,24 +93,19 @@ if __name__ == '__main__':
     config = OllamaConfig()
 
     llm = OllamaNewsSignalExtractor(
-        model_name=config.llm_name,
-        timeout=120.0,
-        max_retries=3,
+        model_name=config.model_name,
     )
 
     examples = [
-        "Bitcoin ETF ads spotted on China's Alipay payment app",
-        "U.S. Supreme Court Lets Nvidia's Crypto Lawsuit Move Forward",
-        "Trump's World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree",
+        'Bitcoin ETF ads spotted on China’s Alipay payment app',
+        'U.S. Supreme Court Lets Nvidia’s Crypto Lawsuit Move Forward',
+        'Trump’s World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree',
     ]
 
     for example in examples:
-        try:
-            logger.info(f'Example: {example}')
-            signal = llm.get_signal(example)
-            logger.info(f'Signal after processing get_signal: {signal}')
-        except TypeError as e:
-            logger.error(f'Error: {e}')
+        print(f'Example: {example}')
+        response = llm.get_signal(example)
+        print(response)
 
     """
     Example: Bitcoin ETF ads spotted on China’s Alipay payment app

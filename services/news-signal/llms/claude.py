@@ -13,6 +13,10 @@ class ClaudeNewsSignalExtractor(BaseNewsSignalExtractor):
         api_key: str,
         temperature: Optional[float] = 0,
     ):
+        print(f'Initializing Claude with model: {model_name}')  # Debug line
+        print(
+            f'API key starts with: {api_key[:8]}...'
+        )  # Debug line (safe to show first few chars)
         self.llm = Anthropic(
             model=model_name,
             api_key=api_key,
@@ -21,22 +25,24 @@ class ClaudeNewsSignalExtractor(BaseNewsSignalExtractor):
 
         self.prompt_template = PromptTemplate(
             template="""
-            You are a financial analyst.
-            You are given a news article and you need to determine the impact of the news on the BTC and ETH price.
+            You are an expert crypto financial analyst with deep knowledge of market dynamics and sentiment analysis.
+            Analyze the following news story and determine its potential impact on crypto asset prices.
+            Focus on both direct mentions and indirect implications for each asset.
 
-            You need to output the signal in the following format:
-            {
-                "btc_signal": 1,
-                "eth_signal": 0
-            }
+            Do not output data for a given coin if the news is not relevant to it.
 
-            The signal is either 1, 0, or -1.
-            1 means the price is expected to go up.
-            0 means the price is expected to stay the same.
-            -1 means the price is expected to go down.
+            ## Example input
+            "Goldman Sachs wants to invest in Bitcoin and Ethereum, but not in XRP"
 
-            Here is the news article:
-            {news_article}
+            ## Example output
+            [
+                {"coin": "BTC", "signal": 1},
+                {"coin": "ETH", "signal": 1},
+                {"coin": "XRP", "signal": -1},
+            ]
+
+            News story to analyze:
+            {news_story}
             """
         )
 
@@ -45,13 +51,20 @@ class ClaudeNewsSignalExtractor(BaseNewsSignalExtractor):
     def get_signal(
         self,
         text: str,
-        output_format: Literal['dict', 'NewsSignal'] = 'dict',
+        output_format: Literal['dict', 'NewsSignal'] = 'NewsSignal',
     ) -> NewsSignal | dict:
         response: NewsSignal = self.llm.structured_predict(
             NewsSignal,
             prompt=self.prompt_template,
-            news_article=text,
+            news_story=text,
         )
+
+        # keep only news signals with non-zero signal
+        response.news_signals = [
+            news_signal
+            for news_signal in response.news_signals
+            if news_signal.signal != 0
+        ]
 
         if output_format == 'dict':
             return response.to_dict()
@@ -65,14 +78,14 @@ if __name__ == '__main__':
     config = AnthropicConfig()
 
     llm = ClaudeNewsSignalExtractor(
-        model_name=config.llm_name,
+        model_name=config.model_name,
         api_key=config.api_key,
     )
 
     examples = [
-        'Bitcoin ETF ads spotted on China’s Alipay payment app',
-        'U.S. Supreme Court Lets Nvidia’s Crypto Lawsuit Move Forward',
-        'Trump’s World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree',
+        "Bitcoin ETF ads spotted on China's Alipay payment app",
+        "U.S. Supreme Court Lets Nvidia's Crypto Lawsuit Move Forward",
+        "Trump's World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree",
     ]
 
     for example in examples:

@@ -1,6 +1,33 @@
+from typing import List
+
 from llms.base import BaseNewsSignalExtractor
 from loguru import logger
 from quixstreams import Application
+
+
+def add_signal_to_news(value: dict) -> dict:
+    try:
+        news_signal: List[dict] = llm.get_signal(
+            value['title'], output_format='NewsSignal'
+        )
+        logger.debug(
+            f'Type of news_signal: {type(news_signal)}, Content: {news_signal}'
+        )
+        model_name = llm.model_name
+        timestamp_ms = value['timestamp_ms']
+
+        return [
+            {
+                'coin': n.coin,
+                'signal': n.signal,
+                'model_name': model_name,
+                'timestamp_ms': timestamp_ms,
+            }
+            for n in news_signal.news_signals
+        ]
+    except ValueError:
+        logger.warning(f"No signals found for title: {value['title']}")
+        return []  # Return empty list when no signals are found
 
 
 def main(
@@ -11,6 +38,13 @@ def main(
     llm: BaseNewsSignalExtractor,
 ):
     logger.info('Hello from news-signal!')
+
+    # create a unique id from current milliseconds
+    # TODO: remove this once we are done debugging
+    import time
+
+    unique_id = str(int(time.time() * 1000))
+    kafka_consumer_group = f'{kafka_consumer_group}-{unique_id}'
 
     app = Application(
         broker_address=kafka_broker_address,
@@ -30,27 +64,10 @@ def main(
 
     sdf = app.dataframe(input_topic)
 
-    def process_news_signal(value: dict, llm: BaseNewsSignalExtractor) -> dict:
-        logger.debug(f'Processing value: {value}')
-        try:
-            news_title = value.get('title', '')
-            logger.debug(f'News title: {news_title}')
-            signal = llm.get_signal(news_title)
-            logger.debug(f'Signal: {signal}')
-            return {
-                'news': news_title,
-                'model_name': llm.model_name,
-                'timestamp_ms': value['timestamp_ms'],
-                **signal,
-            }
-        except Exception as e:
-            logger.error(f'Error processing news signal: {str(e)}')
-            raise
-
-    # Use the function in the dataframe transformation
-    sdf = sdf.apply(lambda value: process_news_signal(value, llm))
+    sdf = sdf.apply(add_signal_to_news, expand=True)
 
     sdf = sdf.update(lambda value: logger.debug(f'Final message: {value}'))
+    # sdf = sdf.update(lambda value: breakpoint())
 
     sdf = sdf.to_topic(output_topic)
 

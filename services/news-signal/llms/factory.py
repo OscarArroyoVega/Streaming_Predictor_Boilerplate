@@ -21,7 +21,7 @@ def get_llm(model_provider: Literal['anthropic', 'ollama']) -> BaseNewsSignalExt
         config = AnthropicConfig()
 
         return ClaudeNewsSignalExtractor(
-            model_name=config.llm_name,
+            model_name=config.model_name,
             api_key=config.api_key,
         )
 
@@ -31,7 +31,7 @@ def get_llm(model_provider: Literal['anthropic', 'ollama']) -> BaseNewsSignalExt
         config = OllamaConfig()
 
         return OllamaNewsSignalExtractor(
-            model_name=config.llm_name,
+            model_name=config.model_name,
         )
 
     else:

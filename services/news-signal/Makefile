@@ -31,3 +31,33 @@ run-with-ollama: build
 		-e MODEL_PROVIDER=ollama \
 		--env-file ollama.env \
 		news-signal
+
+
+# To generate a golden dataset with (instruction, input, output) tuples to do
+# Supervised Fine Tuning.
+golden-dataset-with-claude:
+	uv run python golden_dataset.py \
+		--model_provider anthropic \
+		--n 10000 \
+		--input_file ./data/cryptopanic_news.csv \
+		--output_file ./data/instruction_dataset_claude_10k.jsonl
+
+golden-dataset-with-ollama:
+	uv run python golden_dataset.py \
+		--model_provider ollama \
+		--n 10000 \
+		--input_file ./data/cryptopanic_news.csv \
+		--output_file ./data/instruction_dataset_ollama_10k.jsonl
+
+venv-gpu-instance:
+	curl -LsSf https://astral.sh/uv/install.sh | sh && \
+	source $HOME/.local/bin/env && \
+	uv sync --group gpu-instance
+
+login-comet:
+	uv run comet login
+
+fine-tune:
+	uv run python fine_tuning.py \
+		--base_llm_name unsloth/Llama-3.2-1B-bnb-4bit \
+		--dataset_path ./data/instruction_dataset_ollama_10k.jsonl \
