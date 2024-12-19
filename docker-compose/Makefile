@@ -1,4 +1,5 @@
-# redpanda management
+# KAFKA ENVIRONMENT__________________________________________________________________________________________________
+# redpanda start/stop
 start-redpanda:
 	docker-compose -f redpanda.yml up -d
 
@@ -9,18 +10,22 @@ stop-redpanda:
 add-one-partition-to-trades-topic:
 	docker compose -f redpanda.yml exec redpanda rpk topic add-partitions trades --num 1
 
+
+
+# PIPELINES__________________________________________________________________________________________________________
+# technical indicators pipeline
 build-technical-indicators-live:
-	docker compose -f technical-indicators-pipeline.yml build
+	docker compose -f technical-indicators-pipeline-live.yml build
 
 build-technical-indicators-historical:
 	docker compose -f technical-indicators-pipeline-historical.yml build
 
 # technical indicators pipeline
 start-technical-indicators-live: build-technical-indicators-live
-	docker compose -f technical-indicators-pipeline.yml up -d
+	docker compose -f technical-indicators-pipeline-live.yml up -d
 
 stop-technical-indicators-live:
-	docker compose -f technical-indicators-pipeline.yml down
+	docker compose -f technical-indicators-pipeline-live.yml down
 
 # for historical data
 start-technical-indicators-historical: build-technical-indicators-historical
@@ -31,16 +36,28 @@ start-technical-indicators-historical: build-technical-indicators-historical
 stop-technical-indicators-historical:
 	docker compose -f technical-indicators-pipeline-historical.yml down
 
+# news signals pipeline
+build-news-signals-pipeline-live:
+	docker compose -f news-signals-pipeline-live.yml build
+
+start-news-signals-pipeline-live: build-news-signals-pipeline-live
+	docker compose -f news-signals-pipeline-live.yml up -d
+
+stop-news-signals-pipeline-live:
+	docker compose -f news-signals-pipeline-live.yml down
 
 
-# CLEANUP COMMANDS
 
+# CLEANUP COMMANDS__________________________________________________________________________________________________
+# List topics
 list-topics:
 	docker compose -f redpanda.yml exec redpanda rpk topic list
 
+# Delete topic
 delete-topic:
 	docker compose -f redpanda.yml exec redpanda rpk topic delete $(topic)
 
+# List topics by pattern
 list-topics-by-pattern:
 	docker compose -f redpanda.yml exec redpanda bash -c 'rpk topic list | grep -i "$(pattern)"'
 
@@ -56,7 +73,6 @@ cleanup-historical-topics:
 			fi; \
 		done'
 
-# Delete changelog topics
 cleanup-changelog-topics:
 	@docker compose -f redpanda.yml exec redpanda bash -c '\
 		for topic in $$(rpk topic list | grep "changelog__"); do \
@@ -64,7 +80,6 @@ cleanup-changelog-topics:
 			rpk topic delete "$$topic"; \
 		done'
 
-# Delete misspelled topics
 cleanup-misspelled-topics:
 	@docker compose -f redpanda.yml exec redpanda bash -c '\
 		for topic in $$(rpk topic list | grep -E "technial|indicatores"); do \
@@ -72,7 +87,6 @@ cleanup-misspelled-topics:
 			rpk topic delete "$$topic"; \
 		done'
 
-# Full cleanup while keeping latest run
 cleanup-all:
 	@echo "Starting full cleanup..."
 	@make cleanup-misspelled-topics
@@ -90,8 +104,15 @@ topic-stats:
 		echo "Latest run: $$(rpk topic list | grep "historical_[0-9]" | sort -r | head -n 1)"; \
 		echo "======================"'
 
-# CLEANUP STATE STORE
 cleanup-state-store:
 	@echo "Cleaning up state store..."
 	@docker compose -f technical-indicators-pipeline-historical.yml exec to-feature-store rm -rf /tmp/quixstreams
 	@echo "State store cleaned!"
+
+
+# CHECK COMMANDS__________________________________________________________________________________________________
+list-topics:
+	docker compose -f redpanda.yml exec redpanda rpk topic list
+
+consume-technical-indicators:
+	docker compose -f redpanda.yml exec redpanda rpk topic consume technical_indicators

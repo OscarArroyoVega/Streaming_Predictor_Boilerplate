@@ -1,16 +1,16 @@
-name: technical-indicators-pipeline
+name: news-signal-pipeline
 networks:
   redpanda-network:
     external: true
     name: redpanda_network
 
 services:
-  trades:
-    image: trades
+  news:
+    image: news
     build:
-      context: ../services/trades
+      context: ../services/news
     env_file:
-      - ../services/trades/live.settings.env
+      - ../services/news/settings.env
     environment:
       - KAFKA_BROKER_ADDRESS=redpanda:9092
     restart: always
@@ -18,27 +18,17 @@ services:
       - redpanda-network
 
 
-  candles:
-    image: candles
+  news-signal:
+    image: news-signal
     build:
-      context: ../services/candles
+      context: ../services/news-signal
     env_file:
-      - ../services/candles/live.settings.env
+      - ../services/news-signal/settings.env
+      - ../services/news-signal/anthropic_credentials.env
+      # - ../services/news-signal/ollama.env
     environment:
       - KAFKA_BROKER_ADDRESS=redpanda:9092
-    restart: always
-    networks:
-      - redpanda-network
-
-
-  technical-indicators:
-    image: technical-indicators
-    build:
-      context: ../services/technical-indicators
-    env_file:
-      - ../services/technical-indicators/live.settings.env
-    environment:
-      - KAFKA_BROKER_ADDRESS=redpanda:9092
+      - MODEL_PROVIDER=anthropic # ollama
     restart: always
     networks:
       - redpanda-network
@@ -49,7 +39,7 @@ services:
     build:
       context: ../services/to-feature-store
     env_file:
-        - ../services/to-feature-store/live.settings.env
+        - ../services/to-feature-store/live.settings.news-signal.env
         - ../services/to-feature-store/hopsworks_credentials.env
     environment:
       - KAFKA_BROKER_ADDRESS=redpanda:9092

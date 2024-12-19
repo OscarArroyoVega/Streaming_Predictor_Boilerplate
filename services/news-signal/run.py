@@ -49,7 +49,7 @@ def test_connection():
 
         # Test actual LLM endpoint
         data = {
-            'model': 'llama3.2:3b',
+            'model': 'claude-3-opus-20240620',
             'prompt': 'Hello, how are you?',
             'stream': False,
         }

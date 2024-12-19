@@ -2,6 +2,7 @@ from typing import Literal, Optional
 
 from llama_index.core.prompts import PromptTemplate
 from llama_index.llms.anthropic import Anthropic
+from loguru import logger
 
 from .base import BaseNewsSignalExtractor, NewsSignal
 
@@ -23,20 +24,28 @@ class ClaudeNewsSignalExtractor(BaseNewsSignalExtractor):
             template="""
             You are an expert crypto financial analyst with deep knowledge of market dynamics and sentiment analysis.
             Analyze the following news story and determine its potential impact on crypto asset prices.
-            Focus on both direct mentions and indirect implications for each asset.
 
-            Do not output data for a given coin if the news is not relevant to it.
+            Rules:
+            1. Output signal values:
+            - 1 for positive impact (price likely to increase)
+            - -1 for negative impact (price likely to decrease)
+            - Do not output anything for coins not mentioned or impacted
 
-            ## Example input
-            "Goldman Sachs wants to invest in Bitcoin and Ethereum, but not in XRP"
+            2. Consider both direct and indirect impacts:
+            - Direct: "Bitcoin falls 5%" -> {"coin": "BTC", "signal": -1}
+            - Indirect: "Fed raises rates" -> {"coin": "BTC", "signal": -1} (due to risk-off sentiment)
 
-            ## Example output
-            [
-                {"coin": "BTC", "signal": 1},
-                {"coin": "ETH", "signal": 1},
-                {"coin": "XRP", "signal": -1},
-            ]
+            3. Look for price-moving events like:
+            - Major price movements
+            - Market sentiment shifts
+            - Regulatory news
+            - Institutional adoption
+            - Technical developments
 
+            Example input: "Bitcoin drops below $40k as market sentiment turns bearish"
+            Example output: [{"coin": "BTC", "signal": -1}]
+
+            Be strict with your output.
             News story to analyze:
             {news_story}
             """
@@ -49,23 +58,28 @@ class ClaudeNewsSignalExtractor(BaseNewsSignalExtractor):
         text: str,
         output_format: Literal['dict', 'NewsSignal'] = 'NewsSignal',
     ) -> NewsSignal | dict:
-        response: NewsSignal = self.llm.structured_predict(
-            NewsSignal,
-            prompt=self.prompt_template,
-            news_story=text,
-        )
+        try:
+            response: NewsSignal = self.llm.structured_predict(
+                NewsSignal,
+                prompt=self.prompt_template,
+                news_story=text,
+            )
+            logger.debug(f'Claude response: {response}')
 
-        # keep only news signals with non-zero signal
-        response.news_signals = [
-            news_signal
-            for news_signal in response.news_signals
-            if news_signal.signal != 0
-        ]
-
-        if output_format == 'dict':
-            return response.to_dict()
-        else:
-            return response
+            # keep only news signals with non-zero signal
+            response.news_signals = [
+                news_signal
+                for news_signal in response.news_signals
+                if news_signal.signal != 0
+            ]
+            logger.debug(f'Filtered signals: {response.news_signals}')
+            if output_format == 'dict':
+                return response.to_dict()
+            else:
+                return response
+        except Exception as e:
+            logger.error(f'Error in signal extraction: {str(e)}')
+            raise
 
 
 if __name__ == '__main__':

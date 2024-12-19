@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 import hopsworks
 import pandas as pd
+from loguru import logger
 from quixstreams.sinks.base import BatchingSink, SinkBackpressureError, SinkBatch
 
 
@@ -42,10 +43,13 @@ class HopsworksSink(BatchingSink):
         )  # pointer to the feature group
 
         # set materialization interval
-        self._fg.materialization_job.schedule(
-            cron_expression=f'0 0/{self.feature_group_materialization_minutes} * ? * * *',
-            start_time=datetime.now(tz=timezone.utc),
-        )
+        try:
+            self._fg.materialization_job.schedule(
+                cron_expression=f'0 0/{self.feature_group_materialization_minutes} * ? * * *',
+                start_time=datetime.now(tz=timezone.utc),
+            )
+        except Exception as e:
+            logger.error(f'Error scheduling materialization job: {e}')
         # call the constructor of the base class to make sure that batches are inizialized
         super().__init__()
 
