@@ -5,7 +5,7 @@ run-claude:
 	uv run python -m llms.claude
 
 run-ollama:
-	uv run python -m llms.ollama
+	set "OLLAMA_BASE_URL=http://localhost:11434" && uv run python -m llms.ollama
 
 start-ollama:
 	ollama serve

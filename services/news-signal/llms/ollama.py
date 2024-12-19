@@ -2,7 +2,6 @@ from typing import Literal, Optional
 
 from llama_index.core.prompts import PromptTemplate
 from llama_index.llms.ollama import Ollama
-from loguru import logger
 
 from .base import BaseNewsSignalExtractor, NewsSignal
 
@@ -12,10 +11,13 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
         self,
         model_name: str,
         temperature: Optional[float] = 0,
+        ollama_base_url: str = 'http://host.docker.internal:11434',
     ):
         self.llm = Ollama(
             model=model_name,
             temperature=temperature,
+            base_url=ollama_base_url,
+            request_timeout=30.0,
         )
 
         self.prompt_template = PromptTemplate(
@@ -47,44 +49,24 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
         self,
         text: str,
         output_format: Literal['dict', 'NewsSignal'] = 'NewsSignal',
-    ) -> dict | NewsSignal:
-        """
-        Get the news signal from the given `text`
+    ) -> NewsSignal | dict:
+        response: NewsSignal = self.llm.structured_predict(
+            NewsSignal,
+            prompt=self.prompt_template,
+            news_story=text,
+        )
 
-        Args:
-            text: The news article to get the signal from
-            output_format: The format of the output
+        # keep only news signals with non-zero signal
+        response.news_signals = [
+            news_signal
+            for news_signal in response.news_signals
+            if news_signal.signal != 0
+        ]
 
-        Returns:
-            The news signal
-        """
-        try:
-            # Add logging before the request
-            logger.debug(f'Sending request to Ollama with model: {self.model_name}')
-
-            response: NewsSignal = self.llm.structured_predict(
-                NewsSignal,
-                prompt=self.prompt_template,
-                news_story=text,
-            )
-
-            # Add logging after the response
-            logger.debug(f'Raw response from Ollama: {response}')
-
-            # keep only news signals with non-zero signal
-            response.news_signals = [
-                news_signal
-                for news_signal in response.news_signals
-                if news_signal.signal != 0
-            ]
-
-            if output_format == 'dict':
-                return response.to_dict()
-            else:
-                return response
-        except Exception as e:
-            logger.error(f'Error in get_signal: {str(e)}')
-            raise
+        if output_format == 'dict':
+            return response.to_dict()
+        else:
+            return response
 
 
 if __name__ == '__main__':
@@ -94,6 +76,7 @@ if __name__ == '__main__':
 
     llm = OllamaNewsSignalExtractor(
         model_name=config.model_name,
+        ollama_base_url=config.ollama_base_url,
     )
 
     examples = [

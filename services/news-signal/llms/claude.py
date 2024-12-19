@@ -13,10 +13,6 @@ class ClaudeNewsSignalExtractor(BaseNewsSignalExtractor):
         api_key: str,
         temperature: Optional[float] = 0,
     ):
-        print(f'Initializing Claude with model: {model_name}')  # Debug line
-        print(
-            f'API key starts with: {api_key[:8]}...'
-        )  # Debug line (safe to show first few chars)
         self.llm = Anthropic(
             model=model_name,
             api_key=api_key,

@@ -1,5 +1,7 @@
+import socket
 from typing import List
 
+import requests
 from llms.base import BaseNewsSignalExtractor
 from loguru import logger
 from quixstreams import Application
@@ -28,6 +30,35 @@ def add_signal_to_news(value: dict) -> dict:
     except ValueError:
         logger.warning(f"No signals found for title: {value['title']}")
         return []  # Return empty list when no signals are found
+
+
+def test_connection():
+    try:
+        # Test raw socket connection
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('host.docker.internal', 11434))
+        logger.info('Socket connection successful')
+        sock.close()
+    except Exception as e:
+        logger.error(f'Socket connection failed: {e}')
+
+    try:
+        # Test HTTP connection
+        response = requests.get('http://host.docker.internal:11434/api/tags')
+        logger.info(f'HTTP connection successful: {response.json()}')
+
+        # Test actual LLM endpoint
+        data = {
+            'model': 'llama3.2:3b',
+            'prompt': 'Hello, how are you?',
+            'stream': False,
+        }
+        response = requests.post(
+            'http://host.docker.internal:11434/api/generate', json=data
+        )
+        logger.info(f'LLM generation successful: {response.json()}')
+    except Exception as e:
+        logger.error(f'HTTP connection failed: {e}')
 
 
 def main(
