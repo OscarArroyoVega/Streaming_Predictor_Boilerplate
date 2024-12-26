@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,7 +11,7 @@ class Config(BaseSettings):
     kafka_topic: str
     pairs: List[str]
     data_source: Literal['live', 'historical', 'test']
-    last_n_days: int
+    last_n_days: Optional[int] = None
 
 
 config = Config()

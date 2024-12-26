@@ -11,13 +11,13 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
         self,
         model_name: str,
         temperature: Optional[float] = 0,
-        ollama_base_url: str = 'http://host.docker.internal:11434',
+        ollama_base_url: str = 'http://localhost:11434',
     ):
         self.llm = Ollama(
             model=model_name,
             temperature=temperature,
             base_url=ollama_base_url,
-            request_timeout=30.0,
+            request_timeout=60.0,
         )
 
         self.prompt_template = PromptTemplate(
@@ -89,33 +89,3 @@ if __name__ == '__main__':
         print(f'Example: {example}')
         response = llm.get_signal(example)
         print(response)
-
-    """
-    Example: Bitcoin ETF ads spotted on China’s Alipay payment app
-    {
-        "btc_signal": 1,
-        "eth_signal": 0,
-        'reasoning': "The news of Bitcoin ETF ads being spotted on China's Alipay payment
-        app suggests a growing interest in Bitcoin and other cryptocurrencies among Chinese
-        investors. This could lead to increased demand for BTC, causing its price to rise."
-    }
-
-    Example: U.S. Supreme Court Lets Nvidia’s Crypto Lawsuit Move Forward
-    {
-        'btc_signal': -1,
-        'eth_signal': -1,
-        'reasoning': "The US Supreme Court's decision allows Nvidia to pursue its crypto
-        lawsuit, which could lead to increased regulatory uncertainty and potential
-        restrictions on cryptocurrency mining. This could negatively impact the prices
-        of both BTC and ETH."
-    }
-
-    Example: Trump’s World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree
-    {
-        'btc_signal': 0,
-        'eth_signal': 1,
-        'reasoning': "The acquisition of ETH by a major company like
-        Trump's World Liberty suggests that there is increased demand for
-        Ethereum, which could lead to an increase in its price."
-    }
-    """

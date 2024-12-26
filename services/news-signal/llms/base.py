@@ -14,6 +14,7 @@ class NewsSignalOneCoin(BaseModel):
         'ADA',
         'XLM',
         'LTC',
+        'LINK',
         'BCH',
         'DOT',
         'XMR',
@@ -30,7 +31,7 @@ class NewsSignalOneCoin(BaseModel):
         'XEM',
         'ZEC',
         'ETC',
-    ] = Field(description='The coin that the news is about')
+    ] = Field(description='The coin related to the news')
     signal: Literal[1, 0, -1] = Field(
         description="""
     The signal of the news on the coin price.
@@ -61,7 +62,7 @@ class NewsSignal(BaseModel):
 class BaseNewsSignalExtractor(ABC):
     @abstractmethod
     def get_signal(
-        self, text: str, output_format: Literal['dict', 'NewsSignal'] = 'NewsSignal'
+        self, text: str, output_format: Literal['dict', 'NewsSignal']
     ) -> dict | NewsSignal:
         pass
 

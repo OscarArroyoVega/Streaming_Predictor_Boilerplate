@@ -32,6 +32,10 @@ run-with-ollama: build
 		--env-file ollama.env \
 		news-signal
 
+# To generate a golden dataset with (instruction, input, output) tuples to do
+# Supervised Fine Tuning
+run-golden-dataset:
+	uv run python golden_dataset.py
 
 # To generate a golden dataset with (instruction, input, output) tuples to do
 # Supervised Fine Tuning.

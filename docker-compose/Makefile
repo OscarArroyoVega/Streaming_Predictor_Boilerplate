@@ -116,3 +116,9 @@ list-topics:
 
 consume-technical-indicators:
 	docker compose -f redpanda.yml exec redpanda rpk topic consume technical_indicators
+
+
+# UV RESET
+uv clean
+delet .venv
+delet uv.lock

@@ -1,4 +1,4 @@
-name: technical-indicators-pipeline
+name: technical-indicators-pipeline-live
 networks:
   redpanda-network:
     external: true
