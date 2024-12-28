@@ -62,6 +62,8 @@ login-comet:
 	uv run comet login
 
 fine-tune:
-	uv run python fine_tuning.py \
-		--base_llm_name unsloth/Llama-3.2-1B-bnb-4bit \
-		--dataset_path ./data/instruction_dataset_ollama_10k.jsonl \
+	python fine_tuning.py \
+        --base_llm_name unsloth/Llama-3.2-1B-bnb-4bit \
+        --dataset_path ./data/golden_dataset_claude.jsonl \
+        --comet_project_name news-signal \
+        --max_seq_length 1024
