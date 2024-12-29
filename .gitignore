@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]   # This catches .pyc, .pyo, and .pyd files
+*.pyc
+*$py.class
+.pytest_cache/
+.python-version
+.venv/
+
+# Environment and credentials
+.env
+.credentials/
+**/hopsworks_credentials.env
+**/cryptopanic_credentials.env
+**credentials.env
+**/openai_credentials.env
+**/anthropic_credentials.env
+**/ollama.env
+
+# State files
+state/
+
+# IDE and System files
+.idea/
+.DS_Store
+
+.last_run_id
+
+**/news_signal.egg-info

@@ -1,0 +1,48 @@
+name: news-signal-pipeline
+networks:
+  redpanda-network:
+    external: true
+    name: redpanda_network
+
+services:
+  news:
+    image: news
+    build:
+      context: ../services/news
+    env_file:
+      - ../services/news/settings.env
+    environment:
+      - KAFKA_BROKER_ADDRESS=redpanda:9092
+    restart: always
+    networks:
+      - redpanda-network
+
+
+  news-signal:
+    image: news-signal
+    build:
+      context: ../services/news-signal
+    env_file:
+      - ../services/news-signal/settings.env
+      - ../services/news-signal/anthropic_credentials.env
+      # - ../services/news-signal/ollama.env
+    environment:
+      - KAFKA_BROKER_ADDRESS=redpanda:9092
+      - MODEL_PROVIDER=anthropic # ollama
+    restart: always
+    networks:
+      - redpanda-network
+
+
+  to-feature-store:
+    image: to-feature-store
+    build:
+      context: ../services/to-feature-store
+    env_file:
+        - ../services/to-feature-store/live.settings.news-signal.env
+        - ../services/to-feature-store/hopsworks_credentials.env
+    environment:
+      - KAFKA_BROKER_ADDRESS=redpanda:9092
+    restart: always
+    networks:
+      - redpanda-network
