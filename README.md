@@ -43,4 +43,4 @@ Each service is containerized and communicates through Redpanda/Kafka message qu
 
 ## Acknowledgments
 
-This project was developed as part of the "Building Real-Time ML Systems" cohort led by Pau Labarta Bajo. Special thanks to all cohort participants for their insights and contributions.
+This project was developed as part of the "Building Real-Time ML Systems" cohort led by Pau Labarta Bajo. Special thanks to all cohort participants for their insights and contributions and keeping the level so high. 
