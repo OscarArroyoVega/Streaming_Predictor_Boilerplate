@@ -1,3 +1,5 @@
+> ⏸️ This repo is not actively maintained at the moment. Kept for reference.
+
 # Real-Time ML Prediction System with a finetuned LLM to extract a news sentiment feature in real time. 
 
 This repository contains a collection of microservices developed during the "Building Real-Time ML Systems" cohort (3rd version), guided by Pau Labarta Bajo. The system processes real-time trading data and predicts variations in trading pairs using data from various APIs. The architecture is modular and based on independent microservices.
